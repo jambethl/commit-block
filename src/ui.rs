@@ -119,7 +119,7 @@ pub fn ui(frame: &mut Frame, app: &App) {
             .split(area);
 
         let mut key_block = Block::default().title("Host Address").borders(Borders::ALL);
-        let mut value_block = Block::default().title("Blocked").borders(Borders::ALL);
+        let mut value_block = Block::default().title("Blocked (t/F)").borders(Borders::ALL);
 
         let active_style = Style::default().bg(Color::LightYellow).fg(Color::Black);
 
@@ -131,7 +131,11 @@ pub fn ui(frame: &mut Frame, app: &App) {
         let key_text = Paragraph::new(app.key_input.clone()).block(key_block);
         frame.render_widget(key_text, popup_chunks[0]);
 
-        let value_text = Paragraph::new(app.value_input.clone()).block(value_block);
+        let value_text = Paragraph::new(match app.value_input {
+            None => "",
+            Some(true) => "true",
+            Some(false) => "false"
+        }).block(value_block);
         frame.render_widget(value_text, popup_chunks[1]);
     }
 

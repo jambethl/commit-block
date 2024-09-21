@@ -1,5 +1,7 @@
 use std::{error::Error, io};
-
+use std::collections::HashMap;
+use std::fs::File;
+use std::io::{Read, Write};
 use ratatui::{
     backend::{Backend, CrosstermBackend},
     crossterm::{
@@ -86,6 +88,10 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                                     }
                                     CurrentlyEditing::Value => {
                                         app.save_key_value();
+                                        match save_to_host(app.pairs.clone()) {
+                                            Ok(_) => {},
+                                            Err(e) => panic!("{}", e.to_string()),
+                                        }
                                         app.current_screen = CurrentScreen::Main;
                                     }
                                 }
@@ -98,7 +104,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                                         app.key_input.pop();
                                     }
                                     CurrentlyEditing::Value => {
-                                        app.value_input.pop();
+                                        app.value_input = Some(false);
                                     }
                                 }
                             }
@@ -117,7 +123,11 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                                         app.key_input.push(value);
                                     }
                                     CurrentlyEditing::Value => {
-                                        app.value_input.push(value);
+                                        match value {
+                                            't' => app.value_input = Some(true),
+                                            'f' => app.value_input = Some(false),
+                                            _ => {},
+                                        }
                                     }
                                 }
                             }
@@ -129,4 +139,40 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
             }
         }
     }
+}
+
+/// Saves the current host configuration to the host files
+pub fn save_to_host(pairs: HashMap<String, bool>) -> Result<(), io::Error> {
+    let mut hosts = File::open("tmp/test")?;
+    let mut hosts_content = String::new();
+    hosts.read_to_string(&mut hosts_content)?;
+
+    let before_block = hosts_content.lines()
+        .take_while(|s| !s.starts_with("### CommitBlock"));
+    let after_block = hosts_content.lines()
+        .skip_while(|s| !s.starts_with("### End CommitBlock"))
+        .skip(1);
+
+    let mut new_hosts = String::new();
+    for line in before_block.chain(after_block) {
+        new_hosts.push_str(line);
+        new_hosts.push_str("\n")
+    };
+
+    new_hosts.push_str("### CommitBlock\n");
+    for domain in pairs {
+        let block_marker = match domain.1 {
+            true => "",
+            false => "#",
+        };
+        new_hosts.push_str(block_marker);
+        new_hosts.push_str("127.0.0.1\t");
+        new_hosts.push_str(&*domain.0);
+        new_hosts.push_str("\n");
+    };
+    new_hosts.push_str("### End CommitBlock\n");
+
+    let mut file = File::create("tmp/test")?;
+    file.write_all(new_hosts.as_bytes())?;
+    Ok(())
 }

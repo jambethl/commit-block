@@ -13,8 +13,8 @@ pub enum CurrentlyEditing {
 
 pub struct App {
     pub key_input: String,
-    pub value_input: String,
-    pub pairs: HashMap<String, String>,
+    pub value_input: Option<bool>,
+    pub pairs: HashMap<String, bool>,
     pub current_screen: CurrentScreen,
     pub currently_editing: Option<CurrentlyEditing>
 }
@@ -24,7 +24,7 @@ impl App {
     pub fn new() -> App {
         App {
             key_input: String::new(),
-            value_input: String::new(),
+            value_input: None,
             pairs: HashMap::new(),
             current_screen: CurrentScreen::Main,
             currently_editing: None,
@@ -33,10 +33,14 @@ impl App {
 
     pub fn save_key_value(&mut self) {
         self.pairs
-            .insert(self.key_input.clone(), self.value_input.clone());
+            .insert(self.key_input.clone(), match self.value_input {
+                None => false,
+                Some(true) => self.value_input.unwrap().clone(),
+                Some(false) => self.value_input.unwrap().clone(),
+            });
 
         self.key_input = String::new();
-        self.value_input = String::new();
+        self.value_input = None;
         self.currently_editing = None;
     }
 
