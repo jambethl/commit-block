@@ -147,7 +147,7 @@ pub fn ui(frame: &mut Frame, app: &App) {
             .style(Style::default().bg(Color::DarkGray));
 
         let exit_text = Text::styled(
-            "Would you like to output the buffer as json? (y/n)",
+            "Exit?",
             Style::default().fg(Color::Red),
         );
         // the `trim: false` will stop the text from being cut off when over the edge of the block

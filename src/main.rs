@@ -29,7 +29,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut terminal = Terminal::new(backend)?;
 
     let mut app = App::new();
-    let res = run_app(&mut terminal, &mut app);
+    run_app(&mut terminal, &mut app).expect("TODO: panic message");
 
     disable_raw_mode()?;
     execute!(
@@ -40,14 +40,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     terminal.show_cursor()?;
 
-    if let Ok(do_print) = res {
-        if do_print {
-            app.print_json()?;
-        }
-    } else if let Err(err) = res {
-        println!("{err:?}");
-    }
-
     Ok(())
 }
 
@@ -55,7 +47,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
     loop {
         terminal.draw(|f| ui(f, app))?;
         if let Event::Key(key) = event::read()? {
-            if key.kind == event::KeyEventKind::Release {
+            if key.kind == KeyEventKind::Release {
                 continue;
             }
             match app.current_screen {
@@ -70,11 +62,11 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                     _ => {}
                 },
                 CurrentScreen::Exiting => match key.code {
-                    KeyCode::Char('y') => {
+                    KeyCode::Char('y') | KeyCode::Char('q')=> {
                         return Ok(true);
                     }
-                    KeyCode::Char('n') | KeyCode::Char('q') => {
-                        return Ok(false);
+                    KeyCode::Char('n') => {
+                        app.current_screen = CurrentScreen::Main
                     }
                     _ => {}
                 },

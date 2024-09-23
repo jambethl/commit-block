@@ -54,10 +54,4 @@ impl App {
             self.currently_editing = Some(CurrentlyEditing::Key);
         }
     }
-
-    pub fn print_json(&self) -> serde_json::Result<()> {
-        let output = serde_json::to_string(&self.pairs)?;
-        println!("{}", output);
-        Ok(())
-    }
 }
