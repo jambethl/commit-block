@@ -20,6 +20,12 @@ use crate::{
     ui::ui,
 };
 
+const HOST_FILE_LOCAL_PREFIX: &str = "127.0.0.1\t";
+const HOST_FILE_LOCAL_PREFIX_DISABLED: &str = "#127.0.0.1\t";
+const HOST_FILE_COMMIT_BLOCK_BEGIN: &str = "### CommitBlock";
+const HOST_FILE_COMMIT_BLOCK_END: &str = "### End CommitBlock";
+const HOST_FILE_PATH: &str = "tmp/test";
+
 fn main() -> Result<(), Box<dyn Error>> {
     enable_raw_mode()?;
     let mut stderr = io::stderr();
@@ -136,7 +142,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
 
 fn initialise_host_pairs() -> HashMap<String, bool> {
     // TODO better handling
-    let hosts = File::open("tmp/test").unwrap();
+    let hosts = File::open(HOST_FILE_PATH).unwrap();
     let reader = io::BufReader::new(hosts);
 
     let mut inside_commit_block = false;
@@ -145,19 +151,19 @@ fn initialise_host_pairs() -> HashMap<String, bool> {
     for line in reader.lines() {
         let line = line.unwrap();
 
-        if line == "### CommitBlock" {
+        if line == HOST_FILE_COMMIT_BLOCK_BEGIN {
             inside_commit_block = true;
             continue;
-        } else if line == "### End CommitBlock" {
+        } else if line == HOST_FILE_COMMIT_BLOCK_END {
             break;
         }
 
         if inside_commit_block {
             if line.starts_with("#") {
-                let trimmed = line.strip_prefix("#127.0.0.1\t").unwrap_or(&line).parse().unwrap();
+                let trimmed = line.strip_prefix(HOST_FILE_LOCAL_PREFIX_DISABLED).unwrap_or(&line).parse().unwrap();
                 pairs.insert(trimmed, false);
             } else {
-                let trimmed = line.strip_prefix("127.0.0.1\t").unwrap_or(&line).parse().unwrap();
+                let trimmed = line.strip_prefix(HOST_FILE_LOCAL_PREFIX).unwrap_or(&line).parse().unwrap();
                 pairs.insert(trimmed, true);
             }
         }
@@ -168,14 +174,14 @@ fn initialise_host_pairs() -> HashMap<String, bool> {
 
 /// Saves the current host configuration to the host files
 fn save_to_host(pairs: HashMap<String, bool>) -> Result<(), io::Error> {
-    let mut hosts = File::open("tmp/test")?;
+    let mut hosts = File::open(HOST_FILE_PATH)?;
     let mut hosts_content = String::new();
     hosts.read_to_string(&mut hosts_content)?;
 
     let before_block = hosts_content.lines()
-        .take_while(|s| !s.starts_with("### CommitBlock"));
+        .take_while(|s| !s.starts_with(HOST_FILE_COMMIT_BLOCK_BEGIN));
     let after_block = hosts_content.lines()
-        .skip_while(|s| !s.starts_with("### End CommitBlock"))
+        .skip_while(|s| !s.starts_with(HOST_FILE_COMMIT_BLOCK_END))
         .skip(1);
 
     let mut new_hosts = String::new();
@@ -191,7 +197,7 @@ fn save_to_host(pairs: HashMap<String, bool>) -> Result<(), io::Error> {
             false => "#",
         };
         new_hosts.push_str(block_marker);
-        new_hosts.push_str("127.0.0.1\t");
+        new_hosts.push_str(HOST_FILE_LOCAL_PREFIX);
         new_hosts.push_str(&*domain.0);
         new_hosts.push_str("\n");
     };
