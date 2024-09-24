@@ -21,11 +21,11 @@ pub struct App {
 
 impl App {
 
-    pub fn new() -> App {
+    pub fn new(pairs: HashMap<String, bool>) -> App {
         App {
             key_input: String::new(),
             value_input: None,
-            pairs: HashMap::new(),
+            pairs,
             current_screen: CurrentScreen::Main,
             currently_editing: None,
         }

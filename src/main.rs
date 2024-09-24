@@ -1,7 +1,7 @@
 use std::{error::Error, io};
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::{Read, Write};
+use std::io::{BufRead, Read, Write};
 use ratatui::{
     backend::{Backend, CrosstermBackend},
     crossterm::{
@@ -28,7 +28,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let backend = CrosstermBackend::new(stderr);
     let mut terminal = Terminal::new(backend)?;
 
-    let mut app = App::new();
+    let existing_pairs = initialise_host_pairs();
+    let mut app = App::new(existing_pairs);
     run_app(&mut terminal, &mut app).expect("TODO: panic message");
 
     disable_raw_mode()?;
@@ -131,6 +132,38 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
             }
         }
     }
+}
+
+fn initialise_host_pairs() -> HashMap<String, bool> {
+    // TODO better handling
+    let hosts = File::open("tmp/test").unwrap();
+    let reader = io::BufReader::new(hosts);
+
+    let mut inside_commit_block = false;
+    let mut pairs: HashMap<String, bool> = HashMap::new();
+
+    for line in reader.lines() {
+        let line = line.unwrap();
+
+        if line == "### CommitBlock" {
+            inside_commit_block = true;
+            continue;
+        } else if line == "### End CommitBlock" {
+            break;
+        }
+
+        if inside_commit_block {
+            if line.starts_with("#") {
+                let trimmed = line.strip_prefix("#127.0.0.1\t").unwrap_or(&line).parse().unwrap();
+                pairs.insert(trimmed, false);
+            } else {
+                let trimmed = line.strip_prefix("127.0.0.1\t").unwrap_or(&line).parse().unwrap();;
+                pairs.insert(trimmed, true);
+            }
+        }
+    }
+
+    pairs
 }
 
 /// Saves the current host configuration to the host files
