@@ -157,7 +157,7 @@ fn initialise_host_pairs() -> HashMap<String, bool> {
                 let trimmed = line.strip_prefix("#127.0.0.1\t").unwrap_or(&line).parse().unwrap();
                 pairs.insert(trimmed, false);
             } else {
-                let trimmed = line.strip_prefix("127.0.0.1\t").unwrap_or(&line).parse().unwrap();;
+                let trimmed = line.strip_prefix("127.0.0.1\t").unwrap_or(&line).parse().unwrap();
                 pairs.insert(trimmed, true);
             }
         }
