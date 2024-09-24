@@ -134,7 +134,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
 }
 
 /// Saves the current host configuration to the host files
-pub fn save_to_host(pairs: HashMap<String, bool>) -> Result<(), io::Error> {
+fn save_to_host(pairs: HashMap<String, bool>) -> Result<(), io::Error> {
     let mut hosts = File::open("tmp/test")?;
     let mut hosts_content = String::new();
     hosts.read_to_string(&mut hosts_content)?;
