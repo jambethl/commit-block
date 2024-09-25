@@ -203,7 +203,7 @@ fn save_to_host(pairs: HashMap<String, bool>) -> Result<(), io::Error> {
     };
     new_hosts.push_str("### End CommitBlock\n");
 
-    let mut file = File::create("tmp/test")?;
+    let mut file = File::create(HOST_FILE_PATH)?;
     file.write_all(new_hosts.as_bytes())?;
     Ok(())
 }
