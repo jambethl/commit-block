@@ -1,7 +1,8 @@
-use std::{error::Error, io};
+use std::{error::Error, io, thread};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, Read, Write};
+use std::time::Duration;
 use ratatui::{
     backend::{Backend, CrosstermBackend},
     crossterm::{
@@ -11,6 +12,7 @@ use ratatui::{
     },
     Terminal,
 };
+use reqwest::header;
 
 mod app;
 mod ui;
@@ -26,7 +28,8 @@ const HOST_FILE_COMMIT_BLOCK_BEGIN: &str = "### CommitBlock";
 const HOST_FILE_COMMIT_BLOCK_END: &str = "### End CommitBlock";
 const HOST_FILE_PATH: &str = "tmp/test";
 
-fn main() -> Result<(), Box<dyn Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
     enable_raw_mode()?;
     let mut stderr = io::stderr();
     execute!(stderr, EnterAlternateScreen, EnableMouseCapture)?;
@@ -36,6 +39,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let existing_pairs = initialise_host_pairs();
     let mut app = App::new(existing_pairs);
+
+    thread::spawn(move || {
+        check_commit_count();
+    });
     run_app(&mut terminal, &mut app).expect("TODO: panic message");
 
     disable_raw_mode()?;
@@ -137,6 +144,21 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                 _ => {}
             }
         }
+    }
+}
+
+fn check_commit_count() {
+    // TODO call a contributions API with token
+    loop {
+
+        let client = reqwest::blocking::Client::new();
+        let response = client
+            .get("https://api.github.com/users/jambethl/events/public")
+            .header(header::USER_AGENT, "AppName/0.1")
+            .send()
+            .unwrap().text().unwrap();
+
+        thread::sleep(Duration::from_secs(5));
     }
 }
 
