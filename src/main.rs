@@ -49,6 +49,12 @@ const GRAPHQL_QUERY: &str = r#"
         }
        "#;
 
+struct RequestModel {
+    path: String,
+    token: String,
+    body: Value,
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     enable_raw_mode()?;
@@ -178,25 +184,18 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
 }
 
 fn check_commit_count(contribution_goal: i32) {
-    dotenv().ok();
-    let token = env::var("GITHUB_TOKEN").expect("GITHUB_TOKEN not set");
-
-    let body = serde_json::json!({
-        "query": GRAPHQL_QUERY,
-        "variables": {
-            "userName": "jambethl"
-        }
-    });
 
     // TODO store goal_met var; lets us return early if true and day == today
     // avoids us hitting the API unnecessarily until day advances
+    let client = reqwest::blocking::Client::new();
+    let request_info = build_request_model();
     loop {
 
-        let response = reqwest::blocking::Client::new()
-            .post("https://api.github.com/graphql")
+        let response = client
+            .post(&request_info.path)
             .header(header::USER_AGENT, "AppName/0.1")
-            .bearer_auth(&token)
-            .json(&body)
+            .bearer_auth(&request_info.token)
+            .json(&request_info.body)
             .send()
             .unwrap().text().unwrap();
 
@@ -210,6 +209,25 @@ fn check_commit_count(contribution_goal: i32) {
         // TODO draw progress bar
 
         thread::sleep(Duration::from_secs(5));
+    }
+}
+
+fn build_request_model() -> RequestModel {
+    dotenv().ok();
+    let token = env::var("GITHUB_TOKEN").expect("GITHUB_TOKEN not set");
+
+    let body = serde_json::json!({
+        "query": GRAPHQL_QUERY,
+        "variables": {
+            "userName": "jambethl"
+        }
+    });
+    let path = String::from("https://api.github.com/graphql");
+
+    RequestModel {
+        path,
+        token,
+        body
     }
 }
 
