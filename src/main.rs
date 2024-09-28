@@ -3,6 +3,9 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, Read, Write};
 use std::time::Duration;
+use chrono::Utc;
+use std::env;
+use dotenv::dotenv;
 use ratatui::{
     backend::{Backend, CrosstermBackend},
     crossterm::{
@@ -13,6 +16,7 @@ use ratatui::{
     Terminal,
 };
 use reqwest::header;
+use serde_json::Value;
 
 mod app;
 mod ui;
@@ -27,6 +31,23 @@ const HOST_FILE_LOCAL_PREFIX_DISABLED: &str = "#127.0.0.1\t";
 const HOST_FILE_COMMIT_BLOCK_BEGIN: &str = "### CommitBlock";
 const HOST_FILE_COMMIT_BLOCK_END: &str = "### End CommitBlock";
 const HOST_FILE_PATH: &str = "tmp/test";
+const GRAPHQL_QUERY: &str = r#"
+        query($userName:String!) {
+          user(login: $userName){
+            contributionsCollection {
+              contributionCalendar {
+                totalContributions
+                weeks {
+                  contributionDays {
+                    contributionCount
+                    date
+                  }
+                }
+              }
+            }
+          }
+        }
+       "#;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -40,8 +61,17 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let existing_pairs = initialise_host_pairs();
     let mut app = App::new(existing_pairs);
 
+    let args: Vec<String> = env::args().collect();
+    let contribution_goal: i32 = match &args[1].parse() {
+        Ok(num) => *num,
+        Err(_) => {
+            // TODO need to handle this properly
+            eprintln!("Error: The argument provided is not a valid integer");
+            std::process::exit(1);
+        }
+    };
     thread::spawn(move || {
-        check_commit_count();
+        check_commit_count(contribution_goal);
     });
     run_app(&mut terminal, &mut app).expect("TODO: panic message");
 
@@ -147,19 +177,66 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
     }
 }
 
-fn check_commit_count() {
-    // TODO call a contributions API with token
+fn check_commit_count(contribution_goal: i32) {
+    dotenv().ok();
+    let token = env::var("GITHUB_TOKEN").expect("GITHUB_TOKEN not set");
+
+    let body = serde_json::json!({
+        "query": GRAPHQL_QUERY,
+        "variables": {
+            "userName": "jambethl"
+        }
+    });
+
+    // TODO store goal_met var; lets us return early if true and day == today
+    // avoids us hitting the API unnecessarily until day advances
     loop {
 
-        let client = reqwest::blocking::Client::new();
-        let response = client
-            .get("https://api.github.com/users/jambethl/events/public")
+        let response = reqwest::blocking::Client::new()
+            .post("https://api.github.com/graphql")
             .header(header::USER_AGENT, "AppName/0.1")
+            .bearer_auth(&token)
+            .json(&body)
             .send()
             .unwrap().text().unwrap();
 
+        let contribution_count = find_contribution_count_today(response).unwrap();
+
+        println!("{}", contribution_count);
+
+        if contribution_count >= contribution_goal {
+            // TODO unblock sites
+        }
+        // TODO draw progress bar
+
         thread::sleep(Duration::from_secs(5));
     }
+}
+
+fn find_contribution_count_today(api_response: String) -> Result<i32, ()> {
+    let json_response: Value = serde_json::from_str(&api_response).unwrap();
+
+    let today = Utc::now().format("%Y-%m-%d").to_string();
+
+    if let Some(contributions) = json_response["data"]["user"]["contributionsCollection"]
+        ["contributionCalendar"]["weeks"]
+        .as_array()
+    {
+        for week in contributions {
+            if let Some(days) = week["contributionDays"].as_array() {
+                for day in days {
+                    if day["date"] == today {
+                        let contribution_count = day["contributionCount"]
+                            .as_i64()
+                            .unwrap_or(0); // Default to 0 if not found
+                        return Ok(contribution_count as i32);
+                    }
+                }
+            }
+        }
+    }
+    println!("No contributions found for today.");
+    Ok(0)  // Return 0 if no contribution for today
 }
 
 fn initialise_host_pairs() -> HashMap<String, bool> {
