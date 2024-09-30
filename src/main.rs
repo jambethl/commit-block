@@ -31,8 +31,8 @@ const HOST_FILE_LOCAL_PREFIX_DISABLED: &str = "#127.0.0.1\t";
 const HOST_FILE_COMMIT_BLOCK_BEGIN: &str = "### CommitBlock";
 const HOST_FILE_COMMIT_BLOCK_END: &str = "### End CommitBlock";
 const HOST_FILE_PATH: &str = "tmp/test";
-const QUIT_KEY: &str = "q";
-const INSERT_KEY: &str = "i";
+const QUIT_KEY: char = 'q';
+const INSERT_KEY: char = 'i';
 const GRAPHQL_QUERY: &str = r#"
         query($userName:String!) {
           user(login: $userName){
