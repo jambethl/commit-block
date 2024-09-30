@@ -31,6 +31,8 @@ const HOST_FILE_LOCAL_PREFIX_DISABLED: &str = "#127.0.0.1\t";
 const HOST_FILE_COMMIT_BLOCK_BEGIN: &str = "### CommitBlock";
 const HOST_FILE_COMMIT_BLOCK_END: &str = "### End CommitBlock";
 const HOST_FILE_PATH: &str = "tmp/test";
+const QUIT_KEY: &str = "q";
+const INSERT_KEY: &str = "i";
 const GRAPHQL_QUERY: &str = r#"
         query($userName:String!) {
           user(login: $userName){
@@ -102,17 +104,17 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
             }
             match app.current_screen {
                 CurrentScreen::Main => match key.code {
-                    KeyCode::Char('i') => {
+                    KeyCode::Char(INSERT_KEY) => {
                         app.current_screen = CurrentScreen::Editing;
                         app.currently_editing = Some(CurrentlyEditing::Key);
                     }
-                    KeyCode::Char('q') => {
+                    KeyCode::Char(QUIT_KEY) => {
                         app.current_screen = CurrentScreen::Exiting;
                     }
                     _ => {}
                 },
                 CurrentScreen::Exiting => match key.code {
-                    KeyCode::Char('y') | KeyCode::Char('q')=> {
+                    KeyCode::Char('y') | KeyCode::Char(QUIT_KEY)=> {
                         return Ok(true);
                     }
                     KeyCode::Char('n') => {
