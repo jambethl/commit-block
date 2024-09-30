@@ -69,17 +69,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let existing_pairs = initialise_host_pairs();
     let mut app = App::new(existing_pairs);
 
-    let args: Vec<String> = env::args().collect();
-    let contribution_goal: i32 = match &args[1].parse() {
-        Ok(num) => *num,
-        Err(_) => {
-            // TODO need to handle this properly
-            eprintln!("Error: The argument provided is not a valid integer");
-            std::process::exit(1);
-        }
-    };
     thread::spawn(move || {
-        check_commit_count(contribution_goal);
+        check_commit_count();
     });
     run_app(&mut terminal, &mut app).expect("TODO: panic message");
 
@@ -102,6 +93,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
             if key.kind == KeyEventKind::Release {
                 continue;
             }
+            // TODO handle configuration screen
             match app.current_screen {
                 CurrentScreen::Main => match key.code {
                     KeyCode::Char(INSERT_KEY) => {
@@ -185,7 +177,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
     }
 }
 
-fn check_commit_count(contribution_goal: i32) {
+fn check_commit_count() {
 
     // TODO store goal_met var; lets us return early if true and day == today
     // avoids us hitting the API unnecessarily until day advances
@@ -205,6 +197,8 @@ fn check_commit_count(contribution_goal: i32) {
 
         println!("{}", contribution_count);
 
+        let contribution_goal = fetch_configured_contribution_goal();
+
         if contribution_count >= contribution_goal {
             // TODO unblock sites
         }
@@ -212,6 +206,11 @@ fn check_commit_count(contribution_goal: i32) {
 
         thread::sleep(Duration::from_secs(5));
     }
+}
+
+// todo -- fetch from configuration file or else default
+fn fetch_configured_contribution_goal() -> i32 {
+    3
 }
 
 fn build_request_model() -> RequestModel {
