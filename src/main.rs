@@ -1,7 +1,7 @@
 use std::{error::Error, io, thread};
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::{BufRead, Read, Write};
+use std::fs::{File, OpenOptions};
+use std::io::{BufRead, BufReader, Read, Write};
 use std::time::Duration;
 use chrono::Utc;
 use std::env;
@@ -200,7 +200,7 @@ fn check_commit_count() {
         let contribution_goal = fetch_configured_contribution_goal();
 
         if contribution_count >= contribution_goal {
-            // TODO unblock sites
+            unblock_hosts().expect("TODO: panic message");
         }
         // TODO draw progress bar
 
@@ -210,7 +210,7 @@ fn check_commit_count() {
 
 // todo -- fetch from configuration file or else default
 fn fetch_configured_contribution_goal() -> i32 {
-    3
+    0
 }
 
 fn build_request_model() -> RequestModel {
@@ -323,5 +323,40 @@ fn save_to_host(pairs: HashMap<String, bool>) -> Result<(), io::Error> {
 
     let mut file = File::create(HOST_FILE_PATH)?;
     file.write_all(new_hosts.as_bytes())?;
+    Ok(())
+}
+
+fn unblock_hosts() -> Result<(), io::Error> {
+    let file = File::open(HOST_FILE_PATH)?;
+    let reader = BufReader::new(file);
+
+    let mut in_commitblock = false;
+    let mut output = Vec::new();
+
+    for line in reader.lines() {
+        let line = line?;
+
+        if line.trim() == HOST_FILE_COMMIT_BLOCK_BEGIN {
+            in_commitblock = true;
+        } else if line.trim() == HOST_FILE_COMMIT_BLOCK_END {
+            in_commitblock = false;
+        }
+
+        if in_commitblock && !line.trim().starts_with("#") {
+            output.push(format!("#{}", line));
+        } else {
+            output.push(line.clone());
+        }
+    }
+
+    let mut file = OpenOptions::new()
+        .write(true)
+        .truncate(true)
+        .open(HOST_FILE_PATH)?;
+
+    for line in output {
+        writeln!(file, "{}", line)?;
+    }
+
     Ok(())
 }
