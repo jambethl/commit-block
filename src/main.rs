@@ -183,7 +183,13 @@ fn check_commit_count() {
     // avoids us hitting the API unnecessarily until day advances
     let client = reqwest::blocking::Client::new();
     let request_info = build_request_model();
+    let mut goal_met = false;
     loop {
+
+        if goal_met {
+            thread::sleep(Duration::from_secs(30));
+            continue;
+        }
 
         let response = client
             .post(&request_info.path)
@@ -199,8 +205,10 @@ fn check_commit_count() {
 
         let contribution_goal = fetch_configured_contribution_goal();
 
+        // TODO reset contribution count
         if contribution_count >= contribution_goal {
             unblock_hosts().expect("TODO: panic message");
+            goal_met = true;
         }
         // TODO draw progress bar
 
