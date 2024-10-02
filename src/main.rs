@@ -269,7 +269,7 @@ fn find_contribution_count_today(api_response: String) -> Result<i32, ()> {
 fn initialise_host_pairs() -> HashMap<String, bool> {
     // TODO better handling
     let hosts = File::open(HOST_FILE_PATH).unwrap();
-    let reader = io::BufReader::new(hosts);
+    let reader = BufReader::new(hosts);
 
     let mut inside_commit_block = false;
     let mut pairs: HashMap<String, bool> = HashMap::new();
