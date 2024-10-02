@@ -1,4 +1,4 @@
-use std::{error::Error, io, thread};
+use std::{error::Error, fs, io, thread};
 use std::collections::HashMap;
 use std::fs::{File, OpenOptions};
 use std::io::{BufRead, BufReader, Read, Write};
@@ -17,6 +17,7 @@ use ratatui::{
 };
 use reqwest::header;
 use serde_json::Value;
+use serde::Deserialize;
 
 mod app;
 mod ui;
@@ -56,6 +57,13 @@ struct RequestModel {
     token: String,
     body: Value,
 }
+
+#[derive(Deserialize)]
+struct Config {
+    github_username: String,
+    commit_goal: u32,
+}
+
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -182,7 +190,6 @@ fn check_commit_count() {
     // TODO store goal_met var; lets us return early if true and day == today
     // avoids us hitting the API unnecessarily until day advances
     let client = reqwest::blocking::Client::new();
-    let request_info = build_request_model();
     let mut goal_met = false;
     loop {
 
@@ -190,6 +197,9 @@ fn check_commit_count() {
             thread::sleep(Duration::from_secs(30));
             continue;
         }
+
+        let configuration = load_config();
+        let request_info = build_request_model(configuration.github_username);
 
         let response = client
             .post(&request_info.path)
@@ -203,10 +213,8 @@ fn check_commit_count() {
 
         println!("{}", contribution_count);
 
-        let contribution_goal = fetch_configured_contribution_goal();
-
         // TODO reset contribution count
-        if contribution_count >= contribution_goal {
+        if contribution_count >= configuration.commit_goal {
             unblock_hosts().expect("TODO: panic message");
             goal_met = true;
         }
@@ -216,19 +224,21 @@ fn check_commit_count() {
     }
 }
 
-// todo -- fetch from configuration file or else default
-fn fetch_configured_contribution_goal() -> i32 {
-    0
+fn load_config() -> Config {
+    let config_str = fs::read_to_string("config.toml")
+        .expect("Failed to read config file.");
+    toml::from_str(&config_str)
+        .expect("Failed to parse config file.")
 }
 
-fn build_request_model() -> RequestModel {
+fn build_request_model(username: String) -> RequestModel {
     dotenv().ok();
     let token = env::var("GITHUB_TOKEN").expect("GITHUB_TOKEN not set");
 
     let body = serde_json::json!({
         "query": GRAPHQL_QUERY,
         "variables": {
-            "userName": "jambethl"
+            "userName": username
         }
     });
     let path = String::from("https://api.github.com/graphql");
@@ -240,7 +250,7 @@ fn build_request_model() -> RequestModel {
     }
 }
 
-fn find_contribution_count_today(api_response: String) -> Result<i32, ()> {
+fn find_contribution_count_today(api_response: String) -> Result<u32, ()> {
     let json_response: Value = serde_json::from_str(&api_response).unwrap();
 
     let today = Utc::now().format("%Y-%m-%d").to_string();
@@ -256,7 +266,7 @@ fn find_contribution_count_today(api_response: String) -> Result<i32, ()> {
                         let contribution_count = day["contributionCount"]
                             .as_i64()
                             .unwrap_or(0); // Default to 0 if not found
-                        return Ok(contribution_count as i32);
+                        return Ok(contribution_count as u32);
                     }
                 }
             }
