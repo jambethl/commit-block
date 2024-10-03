@@ -101,7 +101,6 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
             if key.kind == KeyEventKind::Release {
                 continue;
             }
-            // TODO handle configuration screen
             match app.current_screen {
                 CurrentScreen::Main => match key.code {
                     KeyCode::Char(INSERT_KEY) => {
@@ -210,8 +209,6 @@ fn check_commit_count() {
             .unwrap().text().unwrap();
 
         let contribution_count = find_contribution_count_today(response).unwrap();
-
-        println!("{}", contribution_count);
 
         // TODO reset contribution count
         if contribution_count >= configuration.commit_goal {
