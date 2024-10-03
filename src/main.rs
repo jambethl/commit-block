@@ -1,10 +1,11 @@
 use std::{error::Error, fs, io, thread};
 use std::collections::HashMap;
+use std::env;
 use std::fs::{File, OpenOptions};
 use std::io::{BufRead, BufReader, Read, Write};
 use std::time::Duration;
-use chrono::Utc;
-use std::env;
+
+use chrono::{Local, Utc};
 use dotenv::dotenv;
 use ratatui::{
     backend::{Backend, CrosstermBackend},
@@ -16,16 +17,16 @@ use ratatui::{
     Terminal,
 };
 use reqwest::header;
-use serde_json::Value;
 use serde::Deserialize;
+use serde_json::Value;
+
+use crate::{
+    app::{App, CurrentlyEditing, CurrentScreen},
+    ui::ui,
+};
 
 mod app;
 mod ui;
-
-use crate::{
-    app::{App, CurrentScreen, CurrentlyEditing},
-    ui::ui,
-};
 
 const HOST_FILE_LOCAL_PREFIX: &str = "127.0.0.1\t";
 const HOST_FILE_LOCAL_PREFIX_DISABLED: &str = "#127.0.0.1\t";
@@ -185,16 +186,22 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
 }
 
 fn check_commit_count() {
-
-    // TODO store goal_met var; lets us return early if true and day == today
-    // avoids us hitting the API unnecessarily until day advances
     let client = reqwest::blocking::Client::new();
     let mut goal_met = false;
+    let mut date_checker_began = Local::now().date_naive(); // mutable since we update this when we pass midnight
     loop {
 
-        if goal_met {
+        // This checks whether we've hit the contribution goal, and we're still on the same day that the program begun
+        // In this scenario, we essentially stop checking the contribution count, since today's goal has been met.
+        // This avoids us hitting the GitHub API unnecessarily. This early exit will continue until we pass midnight
+        let date_now = Local::now().date_naive();
+        if goal_met && date_checker_began == date_now {
             thread::sleep(Duration::from_secs(30));
             continue;
+        } else if date_checker_began < date_now {
+            // We've rolled into the next day, so we need to reset everything
+            date_checker_began = date_now;
+            goal_met = false;
         }
 
         let configuration = load_config();
@@ -210,7 +217,6 @@ fn check_commit_count() {
 
         let contribution_count = find_contribution_count_today(response).unwrap();
 
-        // TODO reset contribution count
         if contribution_count >= configuration.commit_goal {
             unblock_hosts().expect("TODO: panic message");
             goal_met = true;
