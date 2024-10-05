@@ -4,3 +4,4 @@ Cargo.lock
 tmp
 .env
 config.toml
+.DS_Store
