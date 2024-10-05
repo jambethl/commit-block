@@ -29,6 +29,7 @@ mod app;
 mod ui;
 
 const HOST_FILE_LOCAL_PREFIX: &str = "127.0.0.1\t";
+const HOST_FILE_BLOCK_PREFIX: &str = "#";
 const HOST_FILE_LOCAL_PREFIX_DISABLED: &str = "#127.0.0.1\t";
 const HOST_FILE_COMMIT_BLOCK_BEGIN: &str = "### CommitBlock";
 const HOST_FILE_COMMIT_BLOCK_END: &str = "### End CommitBlock";
@@ -304,7 +305,7 @@ fn initialise_host_pairs() -> HashMap<String, bool> {
         }
 
         if inside_commit_block {
-            if line.starts_with("#") {
+            if line.starts_with(HOST_FILE_BLOCK_PREFIX) {
                 let trimmed = line.strip_prefix(HOST_FILE_LOCAL_PREFIX_DISABLED).unwrap_or(&line).parse().unwrap();
                 pairs.insert(trimmed, false);
             } else {
@@ -339,7 +340,7 @@ fn save_to_host(pairs: HashMap<String, bool>) -> Result<(), io::Error> {
     for domain in pairs {
         let block_marker = match domain.1 {
             true => "",
-            false => "#",
+            false => HOST_FILE_BLOCK_PREFIX,
         };
         new_hosts.push_str(block_marker);
         new_hosts.push_str(HOST_FILE_LOCAL_PREFIX);
@@ -371,9 +372,9 @@ fn modify_hosts(toggle_option: HostToggleOption) -> Result<(), io::Error> {
 
         if in_commitblock {
             match toggle_option {
-                HostToggleOption::BLOCK => output.push(line.strip_prefix("#").unwrap_or(&line).to_string()),
-                HostToggleOption::UNBLOCK => {
-                    if !line.trim().starts_with("#") {
+                BLOCK => output.push(line.strip_prefix(HOST_FILE_BLOCK_PREFIX).unwrap_or(&line).to_string()),
+                UNBLOCK => {
+                    if !line.trim().starts_with(HOST_FILE_BLOCK_PREFIX) {
                         output.push(format!("#{}", line));
                     } else {
                         output.push(line.clone());
