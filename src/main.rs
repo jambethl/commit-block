@@ -19,11 +19,11 @@ use ratatui::{
 use reqwest::header;
 use serde::Deserialize;
 use serde_json::Value;
-
 use crate::{
     app::{App, CurrentlyEditing, CurrentScreen},
     ui::ui,
 };
+use crate::HostToggleOption::{BLOCK, UNBLOCK};
 
 mod app;
 mod ui;
@@ -65,6 +65,11 @@ struct Config {
     commit_goal: u32,
 }
 
+/// Used to signify whether to block or unblock the list of configured hosts
+enum HostToggleOption {
+    BLOCK,
+    UNBLOCK
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -202,7 +207,7 @@ fn check_commit_count() {
             // We've rolled into the next day, so we need to reset everything
             date_checker_began = date_now;
             goal_met = false;
-            modify_hosts(true).expect("TODO: panic message");
+            modify_hosts(BLOCK).expect("TODO: panic message");
         }
 
         let configuration = load_config();
@@ -219,7 +224,7 @@ fn check_commit_count() {
         let contribution_count = find_contribution_count_today(response).unwrap();
 
         if contribution_count >= configuration.commit_goal {
-            modify_hosts(false).expect("TODO: panic message");
+            modify_hosts(UNBLOCK).expect("TODO: panic message");
             goal_met = true;
         }
         // TODO draw progress bar
@@ -348,7 +353,7 @@ fn save_to_host(pairs: HashMap<String, bool>) -> Result<(), io::Error> {
     Ok(())
 }
 
-fn modify_hosts(blocking: bool) -> Result<(), io::Error> {
+fn modify_hosts(toggle_option: HostToggleOption) -> Result<(), io::Error> {
     let file = File::open(HOST_FILE_PATH)?;
     let reader = BufReader::new(file);
 
@@ -365,12 +370,15 @@ fn modify_hosts(blocking: bool) -> Result<(), io::Error> {
         }
 
         if in_commitblock {
-            if blocking {
-                output.push(line.strip_prefix("#").unwrap_or(&line).to_string())
-            } else if !line.trim().starts_with("#") {
-                output.push(format!("#{}", line));
-            } else {
-                output.push(line.clone());
+            match toggle_option {
+                HostToggleOption::BLOCK => output.push(line.strip_prefix("#").unwrap_or(&line).to_string()),
+                HostToggleOption::UNBLOCK => {
+                    if !line.trim().starts_with("#") {
+                        output.push(format!("#{}", line));
+                    } else {
+                        output.push(line.clone());
+                    }
+                }
             }
         } else {
             output.push(line.clone());
