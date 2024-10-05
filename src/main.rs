@@ -202,6 +202,7 @@ fn check_commit_count() {
             // We've rolled into the next day, so we need to reset everything
             date_checker_began = date_now;
             goal_met = false;
+            modify_hosts(true).expect("TODO: panic message");
         }
 
         let configuration = load_config();
@@ -218,7 +219,7 @@ fn check_commit_count() {
         let contribution_count = find_contribution_count_today(response).unwrap();
 
         if contribution_count >= configuration.commit_goal {
-            unblock_hosts().expect("TODO: panic message");
+            modify_hosts(false).expect("TODO: panic message");
             goal_met = true;
         }
         // TODO draw progress bar
@@ -347,7 +348,7 @@ fn save_to_host(pairs: HashMap<String, bool>) -> Result<(), io::Error> {
     Ok(())
 }
 
-fn unblock_hosts() -> Result<(), io::Error> {
+fn modify_hosts(blocking: bool) -> Result<(), io::Error> {
     let file = File::open(HOST_FILE_PATH)?;
     let reader = BufReader::new(file);
 
@@ -363,8 +364,14 @@ fn unblock_hosts() -> Result<(), io::Error> {
             in_commitblock = false;
         }
 
-        if in_commitblock && !line.trim().starts_with("#") {
-            output.push(format!("#{}", line));
+        if in_commitblock {
+            if blocking {
+                output.push(line.strip_prefix("#").unwrap_or(&line).to_string())
+            } else if !line.trim().starts_with("#") {
+                output.push(format!("#{}", line));
+            } else {
+                output.push(line.clone());
+            }
         } else {
             output.push(line.clone());
         }
