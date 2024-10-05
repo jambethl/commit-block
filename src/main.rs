@@ -282,7 +282,6 @@ fn find_contribution_count_today(api_response: String) -> Result<u32, ()> {
             }
         }
     }
-    println!("No contributions found for today.");
     Ok(0)  // Return 0 if no contribution for today
 }
 
