@@ -17,7 +17,7 @@ use ratatui::{
     Terminal,
 };
 use reqwest::header;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use crate::{
     app::{App, CurrentlyEditing, CurrentScreen},
@@ -34,6 +34,7 @@ const HOST_FILE_LOCAL_PREFIX_DISABLED: &str = "#127.0.0.1\t";
 const HOST_FILE_COMMIT_BLOCK_BEGIN: &str = "### CommitBlock";
 const HOST_FILE_COMMIT_BLOCK_END: &str = "### End CommitBlock";
 const HOST_FILE_PATH: &str = "tmp/test";
+const STATE_FILE_PATH: &str = "tmp/state_file.json";
 const QUIT_KEY: char = 'q';
 const INSERT_KEY: char = 'i';
 const GRAPHQL_QUERY: &str = r#"
@@ -70,6 +71,11 @@ struct Config {
 enum HostToggleOption {
     BLOCK,
     UNBLOCK
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct ContributionState {
+    threshold_met_date: Option<String>,
 }
 
 #[tokio::main]
@@ -193,22 +199,23 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
 
 fn check_commit_count() {
     let client = reqwest::blocking::Client::new();
-    let mut goal_met = false;
-    let mut date_checker_began = Local::now().date_naive(); // mutable since we update this when we pass midnight
     loop {
 
-        // This checks whether we've hit the contribution goal, and we're still on the same day that the program begun
-        // In this scenario, we essentially stop checking the contribution count, since today's goal has been met.
-        // This avoids us hitting the GitHub API unnecessarily. This early exit will continue until we pass midnight
-        let date_now = Local::now().date_naive();
-        if goal_met && date_checker_began == date_now {
-            thread::sleep(Duration::from_secs(30));
-            continue;
-        } else if date_checker_began < date_now {
-            // We've rolled into the next day, so we need to reset everything
-            date_checker_began = date_now;
-            goal_met = false;
-            modify_hosts(BLOCK).expect("TODO: panic message");
+        let mut state = load_contribution_state(STATE_FILE_PATH).unwrap_or_else(|| ContributionState {
+            threshold_met_date: None,
+        });
+
+        let today = Local::now().date_naive();
+        if let Some(stored_date) = &state.threshold_met_date {
+            let stored_date = chrono::NaiveDate::parse_from_str(stored_date, "%Y-%m-%d").unwrap();
+
+            if stored_date < today {
+                state.threshold_met_date = None;
+                modify_hosts(BLOCK).expect("TODO: panic message");
+            } else {
+                // assume stored_date == today; so wait longer, so we don't hit the API unnecessarily
+                thread::sleep(Duration::from_secs(30));
+            }
         }
 
         let configuration = load_config();
@@ -225,13 +232,25 @@ fn check_commit_count() {
         let contribution_count = find_contribution_count_today(response).unwrap();
 
         if contribution_count >= configuration.commit_goal {
+            state.threshold_met_date = Some(today.format("%Y-%m-%d").to_string());
             modify_hosts(UNBLOCK).expect("TODO: panic message");
-            goal_met = true;
+            persist_contribution_state(&state).expect("TODO: panic message");
         }
         // TODO draw progress bar
 
         thread::sleep(Duration::from_secs(5));
     }
+}
+
+fn load_contribution_state(file_path: &str) -> Option<ContributionState> {
+    let file = File::open(file_path).ok()?;
+    let reader = BufReader::new(file);
+    serde_json::from_reader(reader).ok()
+}
+
+fn persist_contribution_state(state: &ContributionState) -> io::Result<()> {
+    let file = OpenOptions::new().write(true).create(true).truncate(true).open(STATE_FILE_PATH)?;
+    serde_json::to_writer_pretty(file, state).map_err(|e| io::Error::new(io::ErrorKind::Other, e))
 }
 
 fn load_config() -> Config {
