@@ -37,6 +37,7 @@ const HOST_FILE_PATH: &str = "tmp/test";
 const STATE_FILE_PATH: &str = "tmp/state_file.json";
 const QUIT_KEY: char = 'q';
 const INSERT_KEY: char = 'i';
+const DATE_FORMATTER: &str = "%Y-%m-%d";
 const GRAPHQL_QUERY: &str = r#"
         query($userName:String!) {
           user(login: $userName){
@@ -207,7 +208,7 @@ fn check_commit_count() {
 
         let today = Local::now().date_naive();
         if let Some(stored_date) = &state.threshold_met_date {
-            let stored_date = chrono::NaiveDate::parse_from_str(stored_date, "%Y-%m-%d").unwrap();
+            let stored_date = chrono::NaiveDate::parse_from_str(stored_date, DATE_FORMATTER).unwrap();
 
             if stored_date < today {
                 state.threshold_met_date = None;
@@ -232,7 +233,7 @@ fn check_commit_count() {
         let contribution_count = find_contribution_count_today(response).unwrap();
 
         if contribution_count >= configuration.commit_goal {
-            state.threshold_met_date = Some(today.format("%Y-%m-%d").to_string());
+            state.threshold_met_date = Some(today.format(DATE_FORMATTER).to_string());
             modify_hosts(UNBLOCK).expect("TODO: panic message");
             persist_contribution_state(&state).expect("TODO: panic message");
         }
@@ -282,7 +283,7 @@ fn build_request_model(username: String) -> RequestModel {
 fn find_contribution_count_today(api_response: String) -> Result<u32, ()> {
     let json_response: Value = serde_json::from_str(&api_response).unwrap();
 
-    let today = Utc::now().format("%Y-%m-%d").to_string();
+    let today = Utc::now().format(DATE_FORMATTER).to_string();
 
     if let Some(contributions) = json_response["data"]["user"]["contributionsCollection"]
         ["contributionCalendar"]["weeks"]
