@@ -391,7 +391,13 @@ fn modify_hosts(toggle_option: HostToggleOption) -> Result<(), io::Error> {
 
         if in_commitblock {
             match toggle_option {
-                BLOCK => output.push(line.strip_prefix(HOST_FILE_BLOCK_PREFIX).unwrap_or(&line).to_string()),
+                BLOCK => {
+                    if line != HOST_FILE_COMMIT_BLOCK_BEGIN {
+                        output.push(line.strip_prefix(HOST_FILE_BLOCK_PREFIX).unwrap_or(&line).to_string())
+                    } else {
+                        output.push(line.clone());
+                    }
+                },
                 UNBLOCK => {
                     if !line.trim().starts_with(HOST_FILE_BLOCK_PREFIX) {
                         output.push(format!("#{}", line));
