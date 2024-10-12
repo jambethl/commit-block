@@ -16,7 +16,8 @@ pub struct App {
     pub value_input: Option<bool>,
     pub pairs: HashMap<String, bool>,
     pub current_screen: CurrentScreen,
-    pub currently_editing: Option<CurrentlyEditing>
+    pub currently_editing: Option<CurrentlyEditing>,
+    pub progress: u32,
 }
 
 impl App {
@@ -28,6 +29,7 @@ impl App {
             pairs,
             current_screen: CurrentScreen::Main,
             currently_editing: None,
+            progress: 0
         }
     }
 

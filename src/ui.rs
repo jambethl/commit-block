@@ -5,7 +5,8 @@ use ratatui::{
     widgets::{Block, Borders, Clear, List, ListItem, Paragraph, Wrap},
     Frame,
 };
-
+use ratatui::style::Modifier;
+use ratatui::widgets::Gauge;
 use crate::app::{App, CurrentScreen, CurrentlyEditing};
 
 pub fn ui(frame: &mut Frame, app: &App) {
@@ -97,11 +98,22 @@ pub fn ui(frame: &mut Frame, app: &App) {
 
     let footer_chunks = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+        .constraints([Constraint::Percentage(33), Constraint::Percentage(33), Constraint::Percentage(34)])
         .split(chunks[2]);
+
+    let progress_bar = Gauge::default()
+        .block(Block::bordered().title("Progress"))
+        .gauge_style(
+            Style::default()
+                .fg(Color::Yellow)
+                .bg(Color::Black)
+                .add_modifier(Modifier::ITALIC),
+        )
+        .percent(app.progress.try_into().unwrap()); // TODO handle error
 
     frame.render_widget(mode_footer, footer_chunks[0]);
     frame.render_widget(key_notes_footer, footer_chunks[1]);
+    frame.render_widget(progress_bar, footer_chunks[2]);
 
     if let Some(editing) = &app.currently_editing {
         let popup_block = Block::default()

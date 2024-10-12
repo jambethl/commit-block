@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::env;
 use std::fs::{File, OpenOptions};
 use std::io::{BufRead, BufReader, Read, Write};
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use chrono::{Local, Utc};
@@ -89,11 +90,17 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let mut terminal = Terminal::new(backend)?;
 
     let existing_pairs = initialise_host_pairs();
-    let mut app = App::new(existing_pairs);
+    let app = App::new(existing_pairs);
+    // TODO revisit this
+    let app = Arc::new(Mutex::new(app));
+
+    let app_clone = Arc::clone(&app);
 
     thread::spawn(move || {
-        check_commit_count();
+        let mut app = app_clone.lock().unwrap();
+        check_commit_count(&mut app);
     });
+    let mut app = app.lock().unwrap();
     run_app(&mut terminal, &mut app).expect("TODO: panic message");
 
     disable_raw_mode()?;
@@ -198,7 +205,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
     }
 }
 
-fn check_commit_count() {
+fn check_commit_count(app: &mut App) {
     let client = reqwest::blocking::Client::new();
     loop {
 
@@ -237,7 +244,7 @@ fn check_commit_count() {
             modify_hosts(UNBLOCK).expect("TODO: panic message");
             persist_contribution_state(&state).expect("TODO: panic message");
         }
-        // TODO draw progress bar
+        app.progress = contribution_count / configuration.commit_goal * 100;
 
         thread::sleep(Duration::from_secs(5));
     }
