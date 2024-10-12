@@ -101,11 +101,19 @@ pub fn ui(frame: &mut Frame, app: &App) {
         .constraints([Constraint::Percentage(33), Constraint::Percentage(33), Constraint::Percentage(34)])
         .split(chunks[2]);
 
+    let progress_bar_fg_color = if app.progress < 50 {
+        Color::Red
+    } else if app.progress < 100 {
+        Color::Yellow
+    } else {
+        Color::Green
+    };
+
     let progress_bar = Gauge::default()
         .block(Block::bordered().title("Progress"))
         .gauge_style(
             Style::default()
-                .fg(Color::Yellow)
+                .fg(progress_bar_fg_color)
                 .bg(Color::Black)
                 .add_modifier(Modifier::ITALIC),
         )
