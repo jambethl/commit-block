@@ -1,3 +1,3 @@
 # Commit Block
 
-Commit Block is a terminal application which allows you to block certain until a configured threshold of GitHub contributions has been met.
+Commit Block is a terminal application which allows you to block certain domains until a configured threshold of GitHub contributions has been met.
