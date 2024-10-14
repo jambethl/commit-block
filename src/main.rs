@@ -175,6 +175,9 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, rx: Receiver<u
                                 KeyCode::Char(QUIT_KEY) => {
                                     app.current_screen = CurrentScreen::Exiting;
                                 }
+                                KeyCode::Char('h') => {
+                                    app.current_screen = CurrentScreen::Help;
+                                }
                                 _ => {}
                             },
                             CurrentScreen::Exiting => match key.code {
@@ -245,6 +248,13 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, rx: Receiver<u
                                         }
                                     }
                                     _ => {}
+                                }
+                            }
+                            CurrentScreen::Help => {
+                                match key.code {
+                                    _ => {
+                                        app.current_screen = CurrentScreen::Main
+                                    }
                                 }
                             }
                         }

@@ -52,6 +52,7 @@ pub fn ui(frame: &mut Frame, app: &App) {
                 Span::styled("Editing Mode", Style::default().fg(Color::Yellow))
             }
             CurrentScreen::Exiting => Span::styled("Exiting", Style::default().fg(Color::LightRed)),
+            CurrentScreen::Help => Span::styled("Help", Style::default().fg(Color::Green)),
         }
             .to_owned(),
         // A white divider bar to separate the two sections
@@ -90,6 +91,10 @@ pub fn ui(frame: &mut Frame, app: &App) {
                 "(q) to quit / (i) to insert new host / (h) for help",
                 Style::default().fg(Color::Red),
             ),
+            CurrentScreen::Help => Span::styled(
+                "Press any key to return",
+                Style::default().fg(Color::Red),
+            )
         }
     };
 
@@ -157,6 +162,24 @@ pub fn ui(frame: &mut Frame, app: &App) {
             Some(false) => "false"
         }).block(value_block);
         frame.render_widget(value_text, popup_chunks[1]);
+    }
+
+    if let CurrentScreen::Help = app.current_screen {
+        frame.render_widget(Clear, frame.area()); //this clears the entire screen and anything already drawn
+        let popup_block = Block::default()
+            .title("Help")
+            .borders(Borders::NONE)
+            .style(Style::default().bg(Color::Yellow));
+
+        let help_text = Text::styled(
+            "Balh",
+            Style::default().fg(Color::Black)
+        );
+        let help_paragraph = Paragraph::new(help_text)
+            .block(popup_block)
+            .wrap(Wrap { trim: false });
+        let area = centered_rect(60, 25, frame.area());
+        frame.render_widget(help_paragraph, area);
     }
 
     if let CurrentScreen::Exiting = app.current_screen {

@@ -4,6 +4,7 @@ pub enum CurrentScreen {
     Main,
     Editing,
     Exiting,
+    Help
 }
 
 pub enum CurrentlyEditing {
