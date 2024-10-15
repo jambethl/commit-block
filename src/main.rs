@@ -67,7 +67,7 @@ struct RequestModel {
 #[derive(Deserialize)]
 struct Config {
     github_username: String,
-    commit_goal: u32,
+    contribution_goal: u32,
 }
 
 /// Used to signify whether to block or unblock the list of configured hosts
@@ -110,7 +110,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 // * If the goal has been met earlier than today, reset the state
                 // * If the goal has been met today, but the configuration has been updated to increase
                 // the contribution target, reset the state
-                if stored_date < today || state.threshold_met_goal.unwrap() < configuration.commit_goal {
+                if stored_date < today || state.threshold_met_goal.unwrap() < configuration.contribution_goal {
                     state.threshold_met_date = None;
                     state.threshold_met_goal = None;
                     modify_hosts(BLOCK).expect("TODO: panic message");
@@ -286,13 +286,13 @@ fn check_contribution_progress(mut state: ContributionState, date: NaiveDate, co
 
     let contribution_count = find_contribution_count_today(response).unwrap();
 
-    if contribution_count >= configuration.commit_goal {
+    if contribution_count >= configuration.contribution_goal {
         state.threshold_met_date = Some(date.format(DATE_FORMATTER).to_string());
         modify_hosts(UNBLOCK).expect("TODO: panic message");
         persist_contribution_state(&state).expect("TODO: panic message");
     }
 
-    ((contribution_count as f32 / configuration.commit_goal as f32) * 100.0).round() as u32
+    ((contribution_count as f32 / configuration.contribution_goal as f32) * 100.0).round() as u32
 }
 
 fn load_contribution_state(file_path: &str) -> Option<ContributionState> {
