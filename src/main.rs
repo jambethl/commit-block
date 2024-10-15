@@ -79,6 +79,7 @@ enum HostToggleOption {
 #[derive(Serialize, Deserialize, Debug)]
 struct ContributionState {
     threshold_met_date: Option<String>,
+    threshold_met_goal: Option<u32>,
 }
 
 // #[tokio::main]
@@ -96,21 +97,25 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     thread::spawn(move || {
         loop {
+            let configuration = load_config();
             let mut state = load_contribution_state(STATE_FILE_PATH).unwrap_or_else(|| ContributionState {
                 threshold_met_date: None,
+                threshold_met_goal: None,
             });
 
             let today = Local::now().date_naive();
             if let Some(stored_date) = &state.threshold_met_date {
                 let stored_date = NaiveDate::parse_from_str(stored_date, DATE_FORMATTER).unwrap();
 
-                // TODO handle scenario where goal is met, and then the goal is updated
-                if stored_date < today {
+                // * If the goal has been met earlier than today, reset the state
+                // * If the goal has been met today, but the configuration has been updated to increase
+                // the contribution target, reset the state
+                if stored_date < today || state.threshold_met_goal.unwrap() < configuration.commit_goal {
                     state.threshold_met_date = None;
+                    state.threshold_met_goal = None;
                     modify_hosts(BLOCK).expect("TODO: panic message");
+
                 } else {
-                    // Assume the date the goal was hit was today, so exit early to avoid hitting the API.
-                    // This will continue looping until the stored date < today, where the count will reset
                     if tx.send(100).is_err() { // Mark the progress bar as complete
                         break;
                     }
@@ -119,7 +124,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 }
             }
 
-            let contribution_progress = check_contribution_progress(state, today);
+            let contribution_progress = check_contribution_progress(state, today, configuration);
 
             if tx.send(contribution_progress).is_err() {
                 break; // Exit if the receiver has been dropped
@@ -266,10 +271,9 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, rx: Receiver<u
     }
 }
 
-fn check_contribution_progress(mut state: ContributionState, date: NaiveDate) -> u32 {
+fn check_contribution_progress(mut state: ContributionState, date: NaiveDate, configuration: Config) -> u32 {
     let client = reqwest::blocking::Client::new();
 
-    let configuration = load_config();
     let request_info = build_request_model(configuration.github_username);
 
     let response = client
