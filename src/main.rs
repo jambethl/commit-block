@@ -30,6 +30,7 @@ use crate::HostToggleOption::{BLOCK, UNBLOCK};
 mod app;
 mod ui;
 
+const CONFIG_FILE_PATH: &str = "config.toml";
 const HOST_FILE_LOCAL_PREFIX: &str = "127.0.0.1\t";
 const HOST_FILE_BLOCK_PREFIX: &str = "#";
 const HOST_FILE_LOCAL_PREFIX_DISABLED: &str = "#127.0.0.1\t";
@@ -97,7 +98,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     thread::spawn(move || {
         loop {
-            let configuration = load_config();
+            let configuration = load_config(CONFIG_FILE_PATH);
             let mut state = load_contribution_state(STATE_FILE_PATH).unwrap_or_else(|| ContributionState {
                 threshold_met_date: None,
                 threshold_met_goal: None,
@@ -306,8 +307,8 @@ fn persist_contribution_state(state: &ContributionState) -> io::Result<()> {
     serde_json::to_writer_pretty(file, state).map_err(|e| io::Error::new(io::ErrorKind::Other, e))
 }
 
-fn load_config() -> Config {
-    let config_str = fs::read_to_string("config.toml")
+fn load_config(file_path: &str) -> Config {
+    let config_str = fs::read_to_string(file_path)
         .expect("Failed to read config file.");
     toml::from_str(&config_str)
         .expect("Failed to parse config file.")
@@ -473,4 +474,21 @@ fn modify_hosts(toggle_option: HostToggleOption) -> Result<(), io::Error> {
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[should_panic(expected = "Failed to read config file.")]
+    fn load_config_file_not_found_panic() {
+        load_config("doesNotExist.toml");
+    }
+
+    #[test]
+    #[should_panic(expected = "Failed to parse config file.")]
+    fn load_config_file_not_toml_panic() {
+        load_config(".gitignore");
+    }
 }
