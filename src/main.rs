@@ -65,6 +65,12 @@ struct RequestModel {
     body: Value,
 }
 
+#[derive(Serialize, Deserialize)]
+struct ContributionState {
+    threshold_met_date: Option<String>,
+    threshold_met_goal: Option<u32>,
+}
+
 #[derive(Deserialize)]
 struct Config {
     github_username: String,
@@ -75,12 +81,6 @@ struct Config {
 enum HostToggleOption {
     BLOCK,
     UNBLOCK,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct ContributionState {
-    threshold_met_date: Option<String>,
-    threshold_met_goal: Option<u32>,
 }
 
 // #[tokio::main]
