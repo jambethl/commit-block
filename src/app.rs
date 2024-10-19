@@ -4,12 +4,12 @@ pub enum CurrentScreen {
     Main,
     Editing,
     Exiting,
-    Help
+    Help,
 }
 
 pub enum CurrentlyEditing {
     Key,
-    Value
+    Value,
 }
 
 pub struct App {
@@ -20,11 +20,13 @@ pub struct App {
     pub currently_editing: Option<CurrentlyEditing>,
     pub progress: u32,
     pub contribution_goal: u32,
+    pub threshold_met_date: Option<String>,
+    pub threshold_met_goal: Option<u32>,
+    pub username: String,
 }
 
 impl App {
-
-    pub fn new(pairs: HashMap<String, bool>, current_contributions: u32, contribution_goal: u32) -> App {
+    pub fn new(pairs: HashMap<String, bool>, current_contributions: u32, contribution_goal: u32, username: String, threshold_met_date: Option<String>, threshold_met_goal: Option<u32>) -> App {
         App {
             key_input: String::new(),
             value_input: None,
@@ -32,7 +34,10 @@ impl App {
             current_screen: CurrentScreen::Main,
             currently_editing: None,
             progress: current_contributions,
-            contribution_goal
+            contribution_goal,
+            threshold_met_goal,
+            threshold_met_date,
+            username,
         }
     }
 

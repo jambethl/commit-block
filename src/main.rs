@@ -66,7 +66,7 @@ struct RequestModel {
 }
 
 #[derive(Serialize, Deserialize)]
-struct ContributionState {
+struct ContributionThresholdStatus {
     threshold_met_date: Option<String>,
     threshold_met_goal: Option<u32>,
 }
@@ -104,7 +104,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             if goal_tx.send(configuration.contribution_goal).is_err() {
                 break;
             }
-            let mut state = load_contribution_state(STATE_FILE_PATH).unwrap_or_else(|| ContributionState {
+            let mut state = load_contribution_state(STATE_FILE_PATH).unwrap_or_else(|| ContributionThresholdStatus {
                 threshold_met_date: None,
                 threshold_met_goal: None,
             });
@@ -120,7 +120,6 @@ fn main() -> Result<(), Box<dyn Error>> {
                     state.threshold_met_date = None;
                     state.threshold_met_goal = None;
                     modify_hosts(BLOCK).expect("TODO: panic message");
-
                 } else {
                     if tx.send(100).is_err() { // Mark the progress bar as complete
                         break;
@@ -156,16 +155,28 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 fn init_app() -> Arc<Mutex<App>> {
     let existing_pairs = initialise_host_pairs();
-    let contribution_goal = load_config(CONFIG_FILE_PATH).contribution_goal;
+
     let configuration = load_config(CONFIG_FILE_PATH);
-    let state = load_contribution_state(STATE_FILE_PATH).unwrap_or_else(|| ContributionState {
+    let contribution_goal = configuration.contribution_goal;
+    let username = configuration.github_username.clone();
+
+    let state = load_contribution_state(STATE_FILE_PATH).unwrap_or_else(|| ContributionThresholdStatus {
         threshold_met_date: None,
         threshold_met_goal: None,
     });
+    let threshold_met_date = state.threshold_met_date.clone();
+    let threshold_met_goal = state.threshold_met_goal;
+
     let today = Local::now().date_naive();
     let current_contributions = check_contribution_progress(state, today, configuration);
 
-    Arc::new(Mutex::new(App::new(existing_pairs, current_contributions, contribution_goal)))
+    Arc::new(Mutex::new(App::new(
+        existing_pairs,
+        current_contributions,
+        contribution_goal,
+        username,
+        threshold_met_date,
+        threshold_met_goal)))
 }
 
 fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, rx: Receiver<u32>, goal_rx: Receiver<u32>) -> io::Result<bool> {
@@ -301,7 +312,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, rx: Receiver<u
     }
 }
 
-fn check_contribution_progress(mut state: ContributionState, date: NaiveDate, configuration: Config) -> u32 {
+fn check_contribution_progress(mut state: ContributionThresholdStatus, date: NaiveDate, configuration: Config) -> u32 {
     let client = reqwest::blocking::Client::new();
 
     let request_info = build_request_model(configuration.github_username);
@@ -325,13 +336,13 @@ fn check_contribution_progress(mut state: ContributionState, date: NaiveDate, co
     contribution_count
 }
 
-fn load_contribution_state(file_path: &str) -> Option<ContributionState> {
+fn load_contribution_state(file_path: &str) -> Option<ContributionThresholdStatus> {
     let file = File::open(file_path).ok()?;
     let reader = BufReader::new(file);
     serde_json::from_reader(reader).ok()
 }
 
-fn persist_contribution_state(state: &ContributionState) -> io::Result<()> {
+fn persist_contribution_state(state: &ContributionThresholdStatus) -> io::Result<()> {
     let file = OpenOptions::new().write(true).create(true).truncate(true).open(STATE_FILE_PATH)?;
     serde_json::to_writer_pretty(file, state).map_err(|e| io::Error::new(io::ErrorKind::Other, e))
 }

@@ -52,7 +52,36 @@ pub fn ui(frame: &mut Frame, app: &App) {
         .title("Blocked hosts"));
 
     frame.render_widget(left_block, middle_chunks[0]);
-    let right_block = Paragraph::new("Configuration")
+
+    let lines: Vec<Line> = vec![
+        Line::from_iter([
+            Span::styled("Configured contribution target", Style::default().fg(Color::Yellow)),
+            Span::raw(" : "),
+            Span::styled(app.contribution_goal.to_string(), Style::default().fg(Color::Green)),
+        ]),
+        Line::from_iter([
+            Span::styled("Current contribution count for today", Style::default().fg(Color::Yellow)),
+            Span::raw(" : "),
+            Span::styled(app.progress.to_string(), Style::default().fg(Color::Green)),
+        ]),
+        Line::from_iter([
+            Span::styled("Username", Style::default().fg(Color::Yellow)),
+            Span::raw(" : "),
+            Span::styled(app.username.to_string(), Style::default().fg(Color::Green)),
+        ]),
+        Line::from_iter([
+            Span::styled("Previous date contribution goal met", Style::default().fg(Color::Yellow)),
+            Span::raw(" : "),
+            Span::styled(app.threshold_met_date.clone().unwrap_or("None".parse().unwrap()), Style::default().fg(Color::Green)),
+        ]),
+        Line::from_iter([
+            Span::styled("Previous contribution goal met", Style::default().fg(Color::Yellow)),
+            Span::raw(" : "),
+            Span::styled(app.threshold_met_goal.clone().unwrap_or(0).to_string(), Style::default().fg(Color::Green)),
+        ]),
+    ].into_iter().collect();
+
+    let right_block = Paragraph::new(lines)
         .block(Block::default()
             .borders(Borders::ALL)
             .title("Configuration")
