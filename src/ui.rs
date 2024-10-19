@@ -106,9 +106,9 @@ pub fn ui(frame: &mut Frame, app: &App) {
         .constraints([Constraint::Percentage(33), Constraint::Percentage(33), Constraint::Percentage(34)])
         .split(chunks[2]);
 
-    let progress_bar_fg_color = if app.progress < 50 {
+    let progress_bar_fg_color = if app.progress < app.contribution_goal / 2 {
         Color::Red
-    } else if app.progress < 100 {
+    } else if app.progress < app.contribution_goal {
         Color::Yellow
     } else {
         Color::Green
