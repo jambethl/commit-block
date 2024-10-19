@@ -19,6 +19,11 @@ pub fn ui(frame: &mut Frame, app: &App) {
         ])
         .split(frame.area());
 
+    let middle_chunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+        .split(chunks[1]);
+
     let title_block = Block::default()
         .borders(Borders::ALL)
         .style(Style::default());
@@ -40,9 +45,19 @@ pub fn ui(frame: &mut Frame, app: &App) {
         ))));
     }
 
-    let list = List::new(list_items);
+    let left_block = List::new(
+        list_items
+    ).block(Block::default()
+        .borders(Borders::ALL)
+        .title("Blocked hosts"));
 
-    frame.render_widget(list, chunks[1]);
+    frame.render_widget(left_block, middle_chunks[0]);
+    let right_block = Paragraph::new("Configuration")
+        .block(Block::default()
+            .borders(Borders::ALL)
+            .title("Configuration")
+        );
+    frame.render_widget(right_block, middle_chunks[1]);
 
     let current_navigation_text = vec![
         // The first half of the text
@@ -184,7 +199,7 @@ pub fn ui(frame: &mut Frame, app: &App) {
 
         let help_text = Text::styled(
             "Balh",
-            Style::default().fg(Color::Black)
+            Style::default().fg(Color::Black),
         );
         let help_paragraph = Paragraph::new(help_text)
             .block(popup_block)
