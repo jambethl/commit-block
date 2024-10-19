@@ -118,6 +118,12 @@ pub fn ui(frame: &mut Frame, app: &App) {
         format!("{:.1}/{:.1}", app.progress, app.contribution_goal),
         Style::new().italic().bold().fg(progress_bar_fg_color),
     );
+
+    let contribution_ratio = if app.progress > app.contribution_goal {
+        1.0
+    } else {
+        app.progress as f64 / app.contribution_goal as f64
+    };
     let progress_bar = Gauge::default()
         .block(Block::bordered().title("Progress"))
         .gauge_style(
@@ -127,7 +133,7 @@ pub fn ui(frame: &mut Frame, app: &App) {
                 .add_modifier(Modifier::ITALIC),
         )
         .label(progress_label)
-        .percent(app.progress.try_into().unwrap()); // TODO handle error
+        .ratio(contribution_ratio);
 
     frame.render_widget(mode_footer, footer_chunks[0]);
     frame.render_widget(key_notes_footer, footer_chunks[1]);

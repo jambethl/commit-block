@@ -94,6 +94,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let app = init_app();
     let (tx, rx): (mpsc::Sender<u32>, Receiver<u32>) = mpsc::channel();
+
+    // TODO - won't need this receiver when we have a UI for configuring goal
     let (goal_tx, goal_rx): (mpsc::Sender<u32>, Receiver<u32>) = mpsc::channel();
 
     thread::spawn(move || {
