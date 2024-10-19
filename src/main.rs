@@ -114,7 +114,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 // * If the goal has been met earlier than today, reset the state
                 // * If the goal has been met today, but the configuration has been updated to increase
                 // the contribution target, reset the state
-                if stored_date < today || state.threshold_met_goal.unwrap() < configuration.contribution_goal {
+                if stored_date < today || state.threshold_met_goal.unwrap_or(0) < configuration.contribution_goal {
                     state.threshold_met_date = None;
                     state.threshold_met_goal = None;
                     modify_hosts(BLOCK).expect("TODO: panic message");
