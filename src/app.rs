@@ -19,18 +19,20 @@ pub struct App {
     pub current_screen: CurrentScreen,
     pub currently_editing: Option<CurrentlyEditing>,
     pub progress: u32,
+    pub contribution_goal: u32,
 }
 
 impl App {
 
-    pub fn new(pairs: HashMap<String, bool>) -> App {
+    pub fn new(pairs: HashMap<String, bool>, current_contributions: u32, contribution_goal: u32) -> App {
         App {
             key_input: String::new(),
             value_input: None,
             pairs,
             current_screen: CurrentScreen::Main,
             currently_editing: None,
-            progress: 0
+            progress: current_contributions,
+            contribution_goal
         }
     }
 

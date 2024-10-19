@@ -5,7 +5,7 @@ use ratatui::{
     widgets::{Block, Borders, Clear, List, ListItem, Paragraph, Wrap},
     Frame,
 };
-use ratatui::style::Modifier;
+use ratatui::style::{Modifier, Stylize};
 use ratatui::widgets::Gauge;
 use crate::app::{App, CurrentScreen, CurrentlyEditing};
 
@@ -114,6 +114,10 @@ pub fn ui(frame: &mut Frame, app: &App) {
         Color::Green
     };
 
+    let progress_label = Span::styled(
+        format!("{:.1}/{:.1}", app.progress, app.contribution_goal),
+        Style::new().italic().bold().fg(progress_bar_fg_color),
+    );
     let progress_bar = Gauge::default()
         .block(Block::bordered().title("Progress"))
         .gauge_style(
@@ -122,6 +126,7 @@ pub fn ui(frame: &mut Frame, app: &App) {
                 .bg(Color::Black)
                 .add_modifier(Modifier::ITALIC),
         )
+        .label(progress_label)
         .percent(app.progress.try_into().unwrap()); // TODO handle error
 
     frame.render_widget(mode_footer, footer_chunks[0]);

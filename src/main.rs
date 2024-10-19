@@ -92,13 +92,16 @@ fn main() -> Result<(), Box<dyn Error>> {
     let backend = CrosstermBackend::new(stderr);
     let mut terminal = Terminal::new(backend)?;
 
-    let existing_pairs = initialise_host_pairs();
-    let app = Arc::new(Mutex::new(App::new(existing_pairs)));
+    let app = init_app();
     let (tx, rx): (mpsc::Sender<u32>, Receiver<u32>) = mpsc::channel();
+    let (goal_tx, goal_rx): (mpsc::Sender<u32>, Receiver<u32>) = mpsc::channel();
 
     thread::spawn(move || {
         loop {
             let configuration = load_config(CONFIG_FILE_PATH);
+            if goal_tx.send(configuration.contribution_goal).is_err() {
+                break;
+            }
             let mut state = load_contribution_state(STATE_FILE_PATH).unwrap_or_else(|| ContributionState {
                 threshold_met_date: None,
                 threshold_met_goal: None,
@@ -135,7 +138,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     });
     let mut app = app.lock().unwrap();
-    run_app(&mut terminal, &mut app, rx).expect("TODO: panic message");
+    run_app(&mut terminal, &mut app, rx, goal_rx).expect("TODO: panic message");
 
     disable_raw_mode()?;
     execute!(
@@ -149,13 +152,37 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, rx: Receiver<u32>) -> io::Result<bool> {
+fn init_app() -> Arc<Mutex<App>> {
+    let existing_pairs = initialise_host_pairs();
+    let contribution_goal = load_config(CONFIG_FILE_PATH).contribution_goal;
+    let configuration = load_config(CONFIG_FILE_PATH);
+    let state = load_contribution_state(STATE_FILE_PATH).unwrap_or_else(|| ContributionState {
+        threshold_met_date: None,
+        threshold_met_goal: None,
+    });
+    let today = Local::now().date_naive();
+    let current_contributions = check_contribution_progress(state, today, configuration);
+
+    Arc::new(Mutex::new(App::new(existing_pairs, current_contributions, contribution_goal)))
+}
+
+fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, rx: Receiver<u32>, goal_rx: Receiver<u32>) -> io::Result<bool> {
     loop {
         terminal.draw(|f| ui(f, app))?;
 
         match rx.try_recv() {
             Ok(contribution_progress) => {
                 app.progress = contribution_progress;
+            }
+            Err(TryRecvError::Empty) => {}
+            Err(TryRecvError::Disconnected) => {
+                return Ok(false);
+            }
+        }
+
+        match goal_rx.try_recv() {
+            Ok(contribution_goal) => {
+                app.contribution_goal = contribution_goal;
             }
             Err(TryRecvError::Empty) => {}
             Err(TryRecvError::Disconnected) => {
@@ -293,7 +320,7 @@ fn check_contribution_progress(mut state: ContributionState, date: NaiveDate, co
         persist_contribution_state(&state).expect("TODO: panic message");
     }
 
-    ((contribution_count as f32 / configuration.contribution_goal as f32) * 100.0).round() as u32
+    contribution_count
 }
 
 fn load_contribution_state(file_path: &str) -> Option<ContributionState> {
