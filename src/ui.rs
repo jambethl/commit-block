@@ -124,7 +124,7 @@ pub fn ui(frame: &mut Frame, app: &App) {
     let current_keys_hint = {
         match app.current_screen {
             CurrentScreen::Main => Span::styled(
-                "(q) quit / (i) modify hosts / (h) help",
+                "(i) modify hosts / (q) quit / (h) help",
                 Style::default().fg(Color::Red),
             ),
             CurrentScreen::Editing => Span::styled(
