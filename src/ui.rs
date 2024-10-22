@@ -92,9 +92,8 @@ pub fn ui(frame: &mut Frame, app: &App) {
         // The first half of the text
         match app.current_screen {
             CurrentScreen::Main => Span::styled("Normal Mode", Style::default().fg(Color::Green)),
-            CurrentScreen::Editing => {
-                Span::styled("Editing Mode", Style::default().fg(Color::Yellow))
-            }
+            CurrentScreen::Editing => Span::styled("Editing Mode", Style::default().fg(Color::Yellow)),
+            CurrentScreen::Configuration => Span::styled("Editing Mode", Style::default().fg(Color::Yellow)),
             CurrentScreen::Exiting => Span::styled("Exiting", Style::default().fg(Color::LightRed)),
             CurrentScreen::Help => Span::styled("Help", Style::default().fg(Color::Green)),
         }
@@ -133,6 +132,10 @@ pub fn ui(frame: &mut Frame, app: &App) {
             ),
             CurrentScreen::Exiting => Span::styled(
                 "(q) to quit / (i) to insert new host / (h) for help",
+                Style::default().fg(Color::Red),
+            ),
+            CurrentScreen::Configuration => Span::styled(
+                "(ESC) to cancel/enter to complete",
                 Style::default().fg(Color::Red),
             ),
             CurrentScreen::Help => Span::styled(
@@ -217,6 +220,34 @@ pub fn ui(frame: &mut Frame, app: &App) {
             Some(false) => "false"
         }).block(value_block);
         frame.render_widget(value_text, popup_chunks[1]);
+    }
+
+    if let Some(_editing_config) = &app.editing_field {
+        let size = frame.size();
+
+        // Create a centered block for the configuration input
+        let block = Block::default()
+            .title("Edit Config")
+            .borders(Borders::ALL)
+            .style(Style::default().fg(Color::White));
+
+        let chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .margin(2)
+            .constraints([Constraint::Length(3), Constraint::Length(3), Constraint::Length(3), Constraint::Min(0)].as_ref())
+            .split(size);
+
+        let goal_input = Paragraph::new(app.contribution_goal_input.clone())
+            .block(Block::default().borders(Borders::ALL).title("Contribution Goal"))
+            .style(Style::default().fg(Color::Yellow));
+
+        let username_input = Paragraph::new(app.github_username_input.clone())
+            .block(Block::default().borders(Borders::ALL).title("GitHub Username"))
+            .style(Style::default().fg(Color::Yellow));
+
+        frame.render_widget(block, size);
+        frame.render_widget(goal_input, chunks[1]);
+        frame.render_widget(username_input, chunks[2]);
     }
 
     if let CurrentScreen::Help = app.current_screen {

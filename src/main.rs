@@ -25,6 +25,7 @@ use crate::{
     app::{App, CurrentlyEditing, CurrentScreen},
     ui::ui,
 };
+use crate::app::EditingField;
 use crate::HostToggleOption::{BLOCK, UNBLOCK};
 
 mod app;
@@ -224,6 +225,10 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, rx: Receiver<u
                                 KeyCode::Char('h') => {
                                     app.current_screen = CurrentScreen::Help;
                                 }
+                                KeyCode::Char('c') => {
+                                    app.current_screen = CurrentScreen::Configuration;
+                                    app.editing_field = Some(EditingField::ContributionGoal);
+                                }
                                 _ => {}
                             },
                             CurrentScreen::Exiting => match key.code {
@@ -289,6 +294,50 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, rx: Receiver<u
                                                         }
                                                     }
                                                 }
+                                            }
+                                            _ => {}
+                                        }
+                                    }
+                                    _ => {}
+                                }
+                            }
+                            CurrentScreen::Configuration => {
+                                match app.editing_field {
+                                    Some(EditingField::ContributionGoal) => {
+                                        if let KeyCode::Char(c) = key.code {
+                                            app.contribution_goal_input.push(c);
+                                        } else if key.code == KeyCode::Backspace {
+                                            app.contribution_goal_input.pop();
+                                        }
+                                    }
+                                    Some(EditingField::GithubUsername) => {
+                                        if let KeyCode::Char(c) = key.code {
+                                            app.github_username_input.push(c);
+                                        } else if key.code == KeyCode::Backspace {
+                                            app.github_username_input.pop();
+                                        }
+                                    }
+                                    None => {}  // Do nothing if no field is being edited
+                                }
+                                if let Some(_) = app.editing_field {
+                                    if key.code == KeyCode::Tab {
+                                        match app.editing_field {
+                                            Some(EditingField::ContributionGoal) => {
+                                                app.editing_field = Some(EditingField::GithubUsername);
+                                            }
+                                            Some(EditingField::GithubUsername) => {
+                                                app.editing_field = Some(EditingField::ContributionGoal);
+                                            }
+                                            _ => {}
+                                        }
+                                    }
+                                }
+                                match key.kind {
+                                    KeyEventKind::Press => {
+                                        match key.code {
+                                            KeyCode::Esc => {
+                                                app.current_screen = CurrentScreen::Main;
+                                                app.editing_field = None;
                                             }
                                             _ => {}
                                         }

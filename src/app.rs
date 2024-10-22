@@ -4,6 +4,7 @@ pub enum CurrentScreen {
     Main,
     Editing,
     Exiting,
+    Configuration,
     Help,
 }
 
@@ -12,12 +13,20 @@ pub enum CurrentlyEditing {
     Value,
 }
 
+pub enum EditingField {
+    ContributionGoal,
+    GithubUsername,
+}
+
 pub struct App {
     pub key_input: String,
     pub value_input: Option<bool>,
     pub pairs: HashMap<String, bool>,
     pub current_screen: CurrentScreen,
     pub currently_editing: Option<CurrentlyEditing>,
+    pub contribution_goal_input: String,
+    pub github_username_input: String,
+    pub editing_field: Option<EditingField>,
     pub progress: u32,
     pub contribution_goal: u32,
     pub threshold_met_date: Option<String>,
@@ -33,6 +42,9 @@ impl App {
             pairs,
             current_screen: CurrentScreen::Main,
             currently_editing: None,
+            contribution_goal_input: "".to_string(),
+            github_username_input: "".to_string(),
+            editing_field: None,
             progress: current_contributions,
             contribution_goal,
             threshold_met_goal,
@@ -52,6 +64,17 @@ impl App {
         self.key_input = String::new();
         self.value_input = None;
         self.currently_editing = None;
+    }
+
+    pub fn toggle_editing_config(&mut self) {
+        if let Some(edit_mode) = &self.editing_field {
+            match edit_mode {
+                EditingField::GithubUsername => self.editing_field = Some(EditingField::ContributionGoal),
+                EditingField::ContributionGoal => self.editing_field = Some(EditingField::GithubUsername),
+            };
+        } else {
+            self.editing_field = Some(EditingField::ContributionGoal);
+        }
     }
 
     pub fn toggle_editing(&mut self) {
