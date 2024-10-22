@@ -72,7 +72,7 @@ struct ContributionThresholdStatus {
     threshold_met_goal: Option<u32>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 struct Config {
     github_username: String,
     contribution_goal: u32,
@@ -339,6 +339,25 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, rx: Receiver<u
                                                 app.current_screen = CurrentScreen::Main;
                                                 app.editing_field = None;
                                             }
+                                            KeyCode::Enter => {
+                                                if let Ok(new_goal) = app.contribution_goal_input.parse::<u32>() {
+                                                    app.contribution_goal = new_goal;
+                                                }
+
+                                                app.username = app.github_username_input.clone();
+
+                                                // Save the configuration back to the file
+                                                save_config(CONFIG_FILE_PATH, &Config{
+                                                    github_username: app.username.clone(),
+                                                    contribution_goal: app.contribution_goal,
+                                                }).expect("Failed to save config.");
+
+                                                // Reset the editing field
+                                                app.editing_field = None;
+
+                                                // Return to the main screen
+                                                app.current_screen = CurrentScreen::Main;
+                                            }
                                             _ => {}
                                         }
                                     }
@@ -394,6 +413,16 @@ fn load_contribution_state(file_path: &str) -> Option<ContributionThresholdStatu
 fn persist_contribution_state(state: &ContributionThresholdStatus) -> io::Result<()> {
     let file = OpenOptions::new().write(true).create(true).truncate(true).open(STATE_FILE_PATH)?;
     serde_json::to_writer_pretty(file, state).map_err(|e| io::Error::new(io::ErrorKind::Other, e))
+}
+
+fn save_config(file_path: &str, config: &Config) -> Result<(), io::Error> {
+    let toml_string = toml::to_string(config)
+        .expect("Failed to serialize config to TOML");
+
+    let mut file = File::create(file_path)?;
+    file.write_all(toml_string.as_bytes())?;
+
+    Ok(())
 }
 
 fn load_config(file_path: &str) -> Config {
