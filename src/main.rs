@@ -319,18 +319,8 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, rx: Receiver<u
                                     }
                                     None => {}  // Do nothing if no field is being edited
                                 }
-                                if let Some(_) = app.editing_field {
-                                    if key.code == KeyCode::Tab {
-                                        match app.editing_field {
-                                            Some(EditingField::ContributionGoal) => {
-                                                app.editing_field = Some(EditingField::GithubUsername);
-                                            }
-                                            Some(EditingField::GithubUsername) => {
-                                                app.editing_field = Some(EditingField::ContributionGoal);
-                                            }
-                                            _ => {}
-                                        }
-                                    }
+                                if key.code == KeyCode::Tab {
+                                    app.toggle_editing_config();
                                 }
                                 match key.kind {
                                     KeyEventKind::Press => {
@@ -347,7 +337,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, rx: Receiver<u
                                                 app.username = app.github_username_input.clone();
 
                                                 // Save the configuration back to the file
-                                                save_config(CONFIG_FILE_PATH, &Config{
+                                                save_config(CONFIG_FILE_PATH, &Config {
                                                     github_username: app.username.clone(),
                                                     contribution_goal: app.contribution_goal,
                                                 }).expect("Failed to save config.");
