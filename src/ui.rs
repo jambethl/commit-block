@@ -224,13 +224,6 @@ pub fn ui(frame: &mut Frame, app: &App) {
 
     if let Some(_editing_config) = &app.editing_field {
         let size = frame.size();
-
-        // Create a centered block for the configuration input
-        let block = Block::default()
-            .title("Edit Config")
-            .borders(Borders::ALL)
-            .style(Style::default().fg(Color::White));
-
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .margin(2)
@@ -239,13 +232,14 @@ pub fn ui(frame: &mut Frame, app: &App) {
 
         let goal_input = Paragraph::new(app.contribution_goal_input.clone())
             .block(Block::default().borders(Borders::ALL).title("Contribution Goal"))
-            .style(Style::default().fg(Color::Yellow));
+            .style(Style::default().fg(Color::White));
 
         let username_input = Paragraph::new(app.github_username_input.clone())
             .block(Block::default().borders(Borders::ALL).title("GitHub Username"))
-            .style(Style::default().fg(Color::Yellow));
+            .style(Style::default().fg(Color::White));
 
-        frame.render_widget(block, size);
+        frame.render_widget(Clear, chunks[1]);
+        frame.render_widget(Clear, chunks[2]);
         frame.render_widget(goal_input, chunks[1]);
         frame.render_widget(username_input, chunks[2]);
     }
