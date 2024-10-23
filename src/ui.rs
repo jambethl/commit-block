@@ -7,7 +7,7 @@ use ratatui::{
 };
 use ratatui::style::{Modifier, Stylize};
 use ratatui::widgets::Gauge;
-use crate::app::{App, CurrentScreen, CurrentlyEditing};
+use crate::app::{App, CurrentScreen, CurrentlyEditing, EditingField};
 
 pub fn ui(frame: &mut Frame, app: &App) {
     let chunks = Layout::default()
@@ -109,6 +109,15 @@ pub fn ui(frame: &mut Frame, app: &App) {
                     }
                     CurrentlyEditing::Value => {
                         Span::styled("Editing Host Configuration", Style::default().fg(Color::LightGreen))
+                    }
+                }
+            } else if let Some(editing) = &app.editing_field {
+                match editing {
+                    EditingField::ContributionGoal => {
+                        Span::styled("Editing Contribution Goal", Style::default().fg(Color::Green))
+                    }
+                    EditingField::GithubUsername => {
+                        Span::styled("Editing Username", Style::default().fg(Color::LightGreen))
                     }
                 }
             } else {
