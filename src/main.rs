@@ -96,15 +96,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     let app = init_app();
     let (tx, rx): (mpsc::Sender<u32>, Receiver<u32>) = mpsc::channel();
 
-    // TODO - won't need this receiver when we have a UI for configuring goal
-    let (goal_tx, goal_rx): (mpsc::Sender<u32>, Receiver<u32>) = mpsc::channel();
-
     thread::spawn(move || {
         loop {
             let configuration = load_config(CONFIG_FILE_PATH);
-            if goal_tx.send(configuration.contribution_goal).is_err() {
-                break;
-            }
             let mut state = load_contribution_state(STATE_FILE_PATH).unwrap_or_else(|| ContributionThresholdStatus {
                 threshold_met_date: None,
                 threshold_met_goal: None,
@@ -140,7 +134,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     });
     let mut app = app.lock().unwrap();
-    run_app(&mut terminal, &mut app, rx, goal_rx).expect("TODO: panic message");
+    run_app(&mut terminal, &mut app, rx).expect("TODO: panic message");
 
     disable_raw_mode()?;
     execute!(
@@ -180,23 +174,13 @@ fn init_app() -> Arc<Mutex<App>> {
         threshold_met_goal)))
 }
 
-fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, rx: Receiver<u32>, goal_rx: Receiver<u32>) -> io::Result<bool> {
+fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, rx: Receiver<u32>) -> io::Result<bool> {
     loop {
         terminal.draw(|f| ui(f, app))?;
 
         match rx.try_recv() {
             Ok(contribution_progress) => {
                 app.progress = contribution_progress;
-            }
-            Err(TryRecvError::Empty) => {}
-            Err(TryRecvError::Disconnected) => {
-                return Ok(false);
-            }
-        }
-
-        match goal_rx.try_recv() {
-            Ok(contribution_goal) => {
-                app.contribution_goal = contribution_goal;
             }
             Err(TryRecvError::Empty) => {}
             Err(TryRecvError::Disconnected) => {
