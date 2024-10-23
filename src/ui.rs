@@ -223,7 +223,7 @@ pub fn ui(frame: &mut Frame, app: &App) {
     }
 
     if let Some(_editing_config) = &app.editing_field {
-        let size = frame.size();
+        let size = frame.area();
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .margin(2)
