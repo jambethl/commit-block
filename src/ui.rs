@@ -8,6 +8,7 @@ use ratatui::{
 use ratatui::style::{Modifier, Stylize};
 use ratatui::widgets::Gauge;
 use crate::app::{App, CurrentScreen, CurrentlyEditing, EditingField};
+use crate::app::EditingField::{ContributionGoal, GithubUsername};
 
 pub fn ui(frame: &mut Frame, app: &App) {
     let chunks = Layout::default()
@@ -241,11 +242,11 @@ pub fn ui(frame: &mut Frame, app: &App) {
 
         let goal_input = Paragraph::new(app.contribution_goal_input.clone())
             .block(Block::default().borders(Borders::ALL).title("Contribution Goal"))
-            .style(Style::default().fg(Color::White));
+            .style(get_input_field_style(app, ContributionGoal));
 
         let username_input = Paragraph::new(app.github_username_input.clone())
             .block(Block::default().borders(Borders::ALL).title("GitHub Username"))
-            .style(Style::default().fg(Color::White));
+            .style(get_input_field_style(app, GithubUsername));
 
         frame.render_widget(Clear, chunks[1]);
         frame.render_widget(Clear, chunks[2]);
@@ -289,6 +290,14 @@ pub fn ui(frame: &mut Frame, app: &App) {
 
         let area = centered_rect(60, 25, frame.area());
         frame.render_widget(exit_paragraph, area);
+    }
+}
+
+fn get_input_field_style(app: &App, field: EditingField) -> Style {
+    if app.editing_field == Some(field) {
+        Style::default().fg(Color::Green)
+    } else {
+        Style::default().fg(Color::White)
     }
 }
 

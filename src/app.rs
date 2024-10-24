@@ -13,6 +13,7 @@ pub enum CurrentlyEditing {
     Value,
 }
 
+#[derive(PartialEq)]
 pub enum EditingField {
     ContributionGoal,
     GithubUsername,
