@@ -245,7 +245,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, rx: Receiver<u
                                                 if let Some(editing) = &app.currently_editing {
                                                     match editing {
                                                         CurrentlyEditing::Key => {
-                                                            app.save_key_value();
+                                                            app.save_new_host();
                                                             if let Err(e) = save_to_host(app.hosts.clone()) {
                                                                 panic!("{}", e.to_string());
                                                             }

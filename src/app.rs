@@ -8,7 +8,7 @@ pub enum CurrentScreen {
 
 pub enum CurrentlyEditing {
     Key,
-    Value,
+    Value, // TODO remove
 }
 
 #[derive(PartialEq)]
@@ -52,7 +52,7 @@ impl App {
         }
     }
 
-    pub fn save_key_value(&mut self) {
+    pub fn save_new_host(&mut self) {
         self.hosts.push(self.host_input.clone());
         self.host_input = String::new();
         self.currently_editing = None;
@@ -66,17 +66,6 @@ impl App {
             };
         } else {
             self.editing_field = Some(EditingField::ContributionGoal);
-        }
-    }
-
-    pub fn toggle_editing(&mut self) {
-        if let Some(edit_mode) = &self.currently_editing {
-            match edit_mode {
-                CurrentlyEditing::Key => self.currently_editing = Some(CurrentlyEditing::Value),
-                CurrentlyEditing::Value => self.currently_editing = Some(CurrentlyEditing::Key),
-            };
-        } else {
-            self.currently_editing = Some(CurrentlyEditing::Key);
         }
     }
 }
