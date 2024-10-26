@@ -371,6 +371,7 @@ fn check_contribution_progress(mut state: ContributionThresholdStatus, date: Nai
 
     if contribution_count >= configuration.contribution_goal {
         state.threshold_met_date = Some(date.format(DATE_FORMATTER).to_string());
+        state.threshold_met_goal = Some(configuration.contribution_goal);
         modify_hosts(UNBLOCK).expect("TODO: panic message");
         persist_contribution_state(&state).expect("TODO: panic message");
     }
