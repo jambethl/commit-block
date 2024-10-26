@@ -124,9 +124,16 @@ fn main() -> Result<(), Box<dyn Error>> {
                 }
             }
 
-            let contribution_progress = check_contribution_progress(state, today, configuration);
+            let contribution_count = check_contribution_progress(&configuration);
 
-            if tx.send(contribution_progress).is_err() {
+            if contribution_count >= configuration.contribution_goal.clone() {
+                state.threshold_met_date = Some(today.format(DATE_FORMATTER).to_string());
+                state.threshold_met_goal = Some(configuration.contribution_goal.clone());
+                modify_hosts(UNBLOCK).expect("TODO: panic message");
+                persist_contribution_state(&state).expect("TODO: panic message");
+            }
+
+            if tx.send(contribution_count).is_err() {
                 break; // Exit if the receiver has been dropped
             }
 
@@ -163,7 +170,7 @@ fn init_app() -> Arc<Mutex<App>> {
     let threshold_met_goal = state.threshold_met_goal;
 
     let today = Local::now().date_naive();
-    let current_contributions = check_contribution_progress(state, today, configuration);
+    let current_contributions = check_contribution_progress(&configuration);
 
     Arc::new(Mutex::new(App::new(
         existing_pairs,
@@ -354,10 +361,10 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, rx: Receiver<u
     }
 }
 
-fn check_contribution_progress(mut state: ContributionThresholdStatus, date: NaiveDate, configuration: Config) -> u32 {
+fn check_contribution_progress(configuration: &Config) -> u32 {
     let client = reqwest::blocking::Client::new();
 
-    let request_info = build_request_model(configuration.github_username);
+    let request_info = build_request_model(&configuration.github_username);
 
     let response = client
         .post(&request_info.path)
@@ -367,16 +374,7 @@ fn check_contribution_progress(mut state: ContributionThresholdStatus, date: Nai
         .send()
         .unwrap().text().unwrap();
 
-    let contribution_count = find_contribution_count_today(response).unwrap();
-
-    if contribution_count >= configuration.contribution_goal {
-        state.threshold_met_date = Some(date.format(DATE_FORMATTER).to_string());
-        state.threshold_met_goal = Some(configuration.contribution_goal);
-        modify_hosts(UNBLOCK).expect("TODO: panic message");
-        persist_contribution_state(&state).expect("TODO: panic message");
-    }
-
-    contribution_count
+     find_contribution_count_today(response).unwrap()
 }
 
 fn load_contribution_state(file_path: &str) -> Option<ContributionThresholdStatus> {
@@ -407,7 +405,7 @@ fn load_config(file_path: &str) -> Config {
         .expect("Failed to parse config file.")
 }
 
-fn build_request_model(username: String) -> RequestModel {
+fn build_request_model(username: &String) -> RequestModel {
     dotenv().ok();
     let token = env::var("GITHUB_TOKEN").expect("GITHUB_TOKEN not set");
 
