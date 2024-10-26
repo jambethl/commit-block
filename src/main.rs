@@ -1,5 +1,4 @@
 use std::{error::Error, fs, io, thread};
-use std::collections::HashMap;
 use std::env;
 use std::fs::{File, OpenOptions};
 use std::io::{BufRead, BufReader, Read, Write};
@@ -156,7 +155,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn init_app() -> Arc<Mutex<App>> {
-    let existing_pairs = initialise_host_pairs();
+    let existing_hosts = initialise_hosts();
 
     let configuration = load_config(CONFIG_FILE_PATH);
     let contribution_goal = configuration.contribution_goal;
@@ -170,7 +169,7 @@ fn init_app() -> Arc<Mutex<App>> {
     let threshold_met_goal = state.threshold_met_goal;
 
     Arc::new(Mutex::new(App::new(
-        existing_pairs,
+        existing_hosts,
         0, // This might not be accurate, but will be corrected by the other thread which is calling GH. Initialising to 0 allows the app to startup instantly instead of waiting for an external response
         contribution_goal,
         username,
@@ -232,18 +231,28 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, rx: Receiver<u
                                 match key.kind {
                                     KeyEventKind::Press => {
                                         match key.code {
+                                            KeyCode::Up => {
+                                                if app.selected_index > 0 {
+                                                    app.selected_index -= 1;
+                                                }
+                                            }
+                                            KeyCode::Down => {
+                                                if app.selected_index < app.hosts.len() - 1 {
+                                                    app.selected_index += 1;
+                                                }
+                                            }
                                             KeyCode::Enter => {
                                                 if let Some(editing) = &app.currently_editing {
                                                     match editing {
                                                         CurrentlyEditing::Key => {
-                                                            app.currently_editing = Some(CurrentlyEditing::Value);
-                                                        }
-                                                        CurrentlyEditing::Value => {
                                                             app.save_key_value();
-                                                            if let Err(e) = save_to_host(app.pairs.clone()) {
+                                                            if let Err(e) = save_to_host(app.hosts.clone()) {
                                                                 panic!("{}", e.to_string());
                                                             }
                                                             app.current_screen = CurrentScreen::Main;
+                                                        }
+                                                        CurrentlyEditing::Value => {
+                                                            // TODO
                                                         }
                                                     }
                                                 }
@@ -252,10 +261,10 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, rx: Receiver<u
                                                 if let Some(editing) = &app.currently_editing {
                                                     match editing {
                                                         CurrentlyEditing::Key => {
-                                                            app.key_input.pop();
+                                                            app.host_input.pop();
                                                         }
                                                         CurrentlyEditing::Value => {
-                                                            app.value_input = Some(false);
+                                                            // TODO
                                                         }
                                                     }
                                                 }
@@ -265,20 +274,21 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, rx: Receiver<u
                                                 app.currently_editing = None;
                                             }
                                             KeyCode::Tab => {
-                                                app.toggle_editing();
+                                                if app.selected_index < app.hosts.len() {
+                                                    app.hosts.remove(app.selected_index);
+                                                    if app.selected_index >= app.hosts.len() && app.selected_index > 0 {
+                                                        app.selected_index -= 1;
+                                                    }
+                                                }
                                             }
                                             KeyCode::Char(value) => {
                                                 if let Some(editing) = &app.currently_editing {
                                                     match editing {
                                                         CurrentlyEditing::Key => {
-                                                            app.key_input.push(value);
+                                                            app.host_input.push(value);
                                                         }
                                                         CurrentlyEditing::Value => {
-                                                            match value {
-                                                                't' => app.value_input = Some(true),
-                                                                'f' => app.value_input = Some(false),
-                                                                _ => {}
-                                                            }
+                                                            // TODO
                                                         }
                                                     }
                                                 }
@@ -453,13 +463,13 @@ fn find_contribution_count_today(api_response: String) -> Result<u32, ()> {
     Ok(0)  // Return 0 if no contribution for today
 }
 
-fn initialise_host_pairs() -> HashMap<String, bool> {
+fn initialise_hosts() -> Vec<String> {
     // TODO better handling
     let hosts = File::open(HOST_FILE_PATH).unwrap();
     let reader = BufReader::new(hosts);
 
     let mut inside_commit_block = false;
-    let mut pairs: HashMap<String, bool> = HashMap::new();
+    let mut hosts: Vec<String> = Vec::new();
 
     for line in reader.lines() {
         let line = line.unwrap();
@@ -474,22 +484,22 @@ fn initialise_host_pairs() -> HashMap<String, bool> {
         if inside_commit_block {
             if line.starts_with(HOST_FILE_BLOCK_PREFIX) {
                 let trimmed = line.strip_prefix(HOST_FILE_LOCAL_PREFIX_DISABLED).unwrap_or(&line).parse().unwrap();
-                pairs.insert(trimmed, false);
+                hosts.push(trimmed);
             } else {
                 let trimmed = line.strip_prefix(HOST_FILE_LOCAL_PREFIX).unwrap_or(&line).parse().unwrap();
-                pairs.insert(trimmed, true);
+                hosts.push(trimmed);
             }
         }
     }
 
-    pairs
+    hosts
 }
 
 /// Saves the current host configuration to the host files
-fn save_to_host(pairs: HashMap<String, bool>) -> Result<(), io::Error> {
-    let mut hosts = File::open(HOST_FILE_PATH)?;
+fn save_to_host(hosts: Vec<String>) -> Result<(), io::Error> {
+    let mut hosts_file = File::open(HOST_FILE_PATH)?;
     let mut hosts_content = String::new();
-    hosts.read_to_string(&mut hosts_content)?;
+    hosts_file.read_to_string(&mut hosts_content)?;
 
     let before_block = hosts_content.lines()
         .take_while(|s| !s.starts_with(HOST_FILE_COMMIT_BLOCK_BEGIN));
@@ -504,14 +514,11 @@ fn save_to_host(pairs: HashMap<String, bool>) -> Result<(), io::Error> {
     };
 
     new_hosts.push_str("### CommitBlock\n");
-    for domain in pairs {
-        let block_marker = match domain.1 {
-            true => "",
-            false => HOST_FILE_BLOCK_PREFIX,
-        };
+    for domain in hosts {
+        let block_marker = "";
         new_hosts.push_str(block_marker);
         new_hosts.push_str(HOST_FILE_LOCAL_PREFIX);
-        new_hosts.push_str(&*domain.0);
+        new_hosts.push_str(&*domain);
         new_hosts.push_str("\n");
     };
     new_hosts.push_str("### End CommitBlock\n");

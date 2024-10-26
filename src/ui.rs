@@ -6,6 +6,7 @@ use ratatui::{
     Frame,
 };
 use ratatui::style::{Modifier, Stylize};
+use ratatui::style::Color::Green;
 use ratatui::widgets::Gauge;
 use crate::app::{App, CurrentScreen, CurrentlyEditing, EditingField};
 use crate::app::EditingField::{ContributionGoal, GithubUsername};
@@ -39,10 +40,23 @@ pub fn ui(frame: &mut Frame, app: &App) {
 
     let mut list_items = Vec::<ListItem>::new();
 
-    for key in app.pairs.keys() {
+    for (index, host) in app.hosts.iter().enumerate() {
+        let style = if app.currently_editing.is_some() && index == app.selected_index {
+            Style::default().fg(Green).bg(Color::LightBlue)
+        } else {
+            Style::default().fg(Color::Yellow)
+        };
         list_items.push(ListItem::new(Line::from(Span::styled(
-            format!("{: <25} : {}", key, app.pairs.get(key).unwrap()),
-            Style::default().fg(Color::Yellow),
+            format!("{: <25}", host),
+            style,
+        ))));
+    }
+
+    // Include the new host input line in edit mode
+    if app.currently_editing.is_some() {
+        list_items.push(ListItem::new(Line::from(Span::styled(
+            format!("{: <25}", app.host_input),
+            Style::default().fg(Color::Cyan),
         ))));
     }
 
@@ -195,42 +209,6 @@ pub fn ui(frame: &mut Frame, app: &App) {
     frame.render_widget(mode_footer, footer_chunks[0]);
     frame.render_widget(key_notes_footer, footer_chunks[1]);
     frame.render_widget(progress_bar, footer_chunks[2]);
-
-    if let Some(editing) = &app.currently_editing {
-        let popup_block = Block::default()
-            .title("Add or remove blocked host")
-            .borders(Borders::NONE)
-            .style(Style::default().bg(Color::DarkGray));
-
-        let area = centered_rect(60, 25, frame.area());
-        frame.render_widget(popup_block, area);
-
-        let popup_chunks = Layout::default()
-            .direction(Direction::Horizontal)
-            .margin(1)
-            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
-            .split(area);
-
-        let mut key_block = Block::default().title("Host Address").borders(Borders::ALL);
-        let mut value_block = Block::default().title("Blocked (t/F)").borders(Borders::ALL);
-
-        let active_style = Style::default().bg(Color::LightYellow).fg(Color::Black);
-
-        match editing {
-            CurrentlyEditing::Key => key_block = key_block.style(active_style),
-            CurrentlyEditing::Value => value_block = value_block.style(active_style),
-        };
-
-        let key_text = Paragraph::new(app.key_input.clone()).block(key_block);
-        frame.render_widget(key_text, popup_chunks[0]);
-
-        let value_text = Paragraph::new(match app.value_input {
-            None => "",
-            Some(true) => "true",
-            Some(false) => "false"
-        }).block(value_block);
-        frame.render_widget(value_text, popup_chunks[1]);
-    }
 
     if let Some(_editing_config) = &app.editing_field {
         let size = frame.area();

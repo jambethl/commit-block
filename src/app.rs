@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 pub enum CurrentScreen {
     Main,
     Editing,
@@ -20,9 +18,9 @@ pub enum EditingField {
 }
 
 pub struct App {
-    pub key_input: String,
-    pub value_input: Option<bool>,
-    pub pairs: HashMap<String, bool>,
+    pub host_input: String,
+    pub selected_index: usize,
+    pub hosts: Vec<String>,
     pub current_screen: CurrentScreen,
     pub currently_editing: Option<CurrentlyEditing>,
     pub contribution_goal_input: String,
@@ -36,11 +34,11 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(pairs: HashMap<String, bool>, current_contributions: u32, contribution_goal: u32, username: String, threshold_met_date: Option<String>, threshold_met_goal: Option<u32>) -> App {
+    pub fn new(hosts: Vec<String>, current_contributions: u32, contribution_goal: u32, username: String, threshold_met_date: Option<String>, threshold_met_goal: Option<u32>) -> App {
         App {
-            key_input: String::new(),
-            value_input: None,
-            pairs,
+            host_input: String::new(),
+            selected_index: 0,
+            hosts,
             current_screen: CurrentScreen::Main,
             currently_editing: None,
             contribution_goal_input: contribution_goal.to_string(),
@@ -55,15 +53,8 @@ impl App {
     }
 
     pub fn save_key_value(&mut self) {
-        self.pairs
-            .insert(self.key_input.clone(), match self.value_input {
-                None => false,
-                Some(true) => self.value_input.unwrap().clone(),
-                Some(false) => self.value_input.unwrap().clone(),
-            });
-
-        self.key_input = String::new();
-        self.value_input = None;
+        self.hosts.push(self.host_input.clone());
+        self.host_input = String::new();
         self.currently_editing = None;
     }
 
