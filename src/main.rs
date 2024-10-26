@@ -116,7 +116,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                     state.threshold_met_goal = None;
                     modify_hosts(BLOCK).expect("TODO: panic message");
                 } else {
-                    if tx.send(100).is_err() { // Mark the progress bar as complete
+                    // TODO -- do I want to display the actual count instead of just the configured amount? Means we have to keep calling the API which I don't wanna do
+                    if tx.send(configuration.contribution_goal).is_err() { // Mark the progress bar as complete
                         break;
                     }
                     thread::sleep(Duration::from_secs(30));
@@ -169,12 +170,9 @@ fn init_app() -> Arc<Mutex<App>> {
     let threshold_met_date = state.threshold_met_date.clone();
     let threshold_met_goal = state.threshold_met_goal;
 
-    let today = Local::now().date_naive();
-    let current_contributions = check_contribution_progress(&configuration);
-
     Arc::new(Mutex::new(App::new(
         existing_pairs,
-        current_contributions,
+        0, // This might not be accurate, but will be corrected by the other thread which is calling GH. Initialising to 0 allows the app to startup instantly instead of waiting for an external response
         contribution_goal,
         username,
         threshold_met_date,
