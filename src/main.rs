@@ -116,8 +116,11 @@ fn main() -> Result<(), Box<dyn Error>> {
                     state.threshold_met_goal = None;
                     modify_hosts(BLOCK).expect("TODO: panic message");
                 } else {
-                    // TODO -- do I want to display the actual count instead of just the configured amount? Means we have to keep calling the API which I don't wanna do
-                    if tx.send(configuration.contribution_goal).is_err() { // Mark the progress bar as complete
+                    let contribution_count = check_contribution_progress(&configuration);
+                    if contribution_count >= configuration.contribution_goal.clone() {
+                        record_contribution_goal_met(today, state, &configuration);
+                    }
+                    if tx.send(contribution_count).is_err() { // Mark the progress bar as complete
                         break;
                     }
                     thread::sleep(Duration::from_secs(30));
@@ -126,12 +129,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
 
             let contribution_count = check_contribution_progress(&configuration);
-
             if contribution_count >= configuration.contribution_goal.clone() {
-                state.threshold_met_date = Some(today.format(DATE_FORMATTER).to_string());
-                state.threshold_met_goal = Some(configuration.contribution_goal.clone());
-                modify_hosts(UNBLOCK).expect("TODO: panic message");
-                persist_contribution_state(&state).expect("TODO: panic message");
+                record_contribution_goal_met(today, state, &configuration);
             }
 
             if tx.send(contribution_count).is_err() {
@@ -373,6 +372,13 @@ fn check_contribution_progress(configuration: &Config) -> u32 {
         .unwrap().text().unwrap();
 
      find_contribution_count_today(response).unwrap()
+}
+
+fn record_contribution_goal_met(date: NaiveDate, mut state: ContributionThresholdStatus, configuration: &Config) {
+    state.threshold_met_date = Some(date.format(DATE_FORMATTER).to_string());
+    state.threshold_met_goal = Some(configuration.contribution_goal);
+    modify_hosts(UNBLOCK).expect("TODO: panic message");
+    persist_contribution_state(&state).expect("TODO: panic message");
 }
 
 fn load_contribution_state(file_path: &str) -> Option<ContributionThresholdStatus> {
