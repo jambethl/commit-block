@@ -40,6 +40,8 @@ const HOST_FILE_PATH: &str = "tmp/test";
 const STATE_FILE_PATH: &str = "tmp/state_file.json";
 const QUIT_KEY: char = 'q';
 const INSERT_KEY: char = 'i';
+const HELP_KEY: char = 'h';
+const CONFIGURATION_KEY: char = 'c';
 const DATE_FORMATTER: &str = "%Y-%m-%d";
 const GRAPHQL_QUERY: &str = r#"
         query($userName:String!) {
@@ -209,10 +211,10 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, rx: Receiver<u
                                 KeyCode::Char(QUIT_KEY) => {
                                     app.current_screen = CurrentScreen::Exiting;
                                 }
-                                KeyCode::Char('h') => {
+                                KeyCode::Char(HELP_KEY) => {
                                     app.current_screen = CurrentScreen::Help;
                                 }
-                                KeyCode::Char('c') => {
+                                KeyCode::Char(CONFIGURATION_KEY) => {
                                     app.current_screen = CurrentScreen::Configuration;
                                     app.editing_field = Some(EditingField::ContributionGoal);
                                 }
