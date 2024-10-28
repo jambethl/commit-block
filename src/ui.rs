@@ -151,7 +151,7 @@ pub fn ui(frame: &mut Frame, app: &App) {
                 Style::default().fg(Color::Red),
             ),
             CurrentScreen::Editing => Span::styled(
-                "(ESC) to cancel/(Tab) to switch boxes/enter to complete",
+                "(ESC) to cancel / (Tab) to delete entry / (Enter) to complete",
                 Style::default().fg(Color::Red),
             ),
             CurrentScreen::Exiting => Span::styled(
