@@ -236,17 +236,23 @@ pub fn ui(frame: &mut Frame, app: &App) {
         frame.render_widget(Clear, frame.area()); //this clears the entire screen and anything already drawn
         let popup_block = Block::default()
             .title("Help")
-            .borders(Borders::NONE)
-            .style(Style::default().bg(Color::Yellow));
+            .borders(Borders::ALL)
+            .style(Style::default().bg(Color::Black));
 
         let help_text = Text::styled(
-            "Balh",
-            Style::default().fg(Color::Black),
+            r#"
+            Commit Blocker allows you to block a configured list of hosts until a given GitHub contribution goal has been met for the day.
+
+            `Blocked Hosts`
+            The `Blocked Hosts` panel shows the currently configured list of hosts which will be blocked until today's contribution goal is met.
+            Pressing (i) will enter Insert mode, where you can add new entries to the list. Pressing (tab) will delete the currently highlighted
+            host. Press (esc) to quit Insert mode without saving changes, and (enter) to save and exit.
+            "#,
+            Style::default().fg(Color::White),
         );
         let help_paragraph = Paragraph::new(help_text)
-            .block(popup_block)
-            .wrap(Wrap { trim: false });
-        let area = centered_rect(60, 25, frame.area());
+            .block(popup_block);
+        let area = centered_rect(100, 100, frame.area());
         frame.render_widget(help_paragraph, area);
     }
 
