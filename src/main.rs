@@ -595,4 +595,23 @@ mod tests {
     fn load_config_file_not_toml_panic() {
         load_config(".gitignore");
     }
+
+    #[test]
+    fn host_file_name() {
+        assert_eq!(HOST_FILE_PATH, "/etc/hosts")
+    }
+
+    #[test]
+    fn config_file_name() {
+        assert_eq!(CONFIG_FILE_PATH, "config.toml")
+    }
+
+    #[test]
+    fn commit_block_file_content() {
+        assert_eq!(HOST_FILE_COMMIT_BLOCK_BEGIN, "### CommitBlock");
+        assert_eq!(HOST_FILE_COMMIT_BLOCK_END, "### End CommitBlock");
+        assert_eq!(HOST_FILE_LOCAL_PREFIX, "127.0.0.1\t");
+        assert_eq!(HOST_FILE_BLOCK_PREFIX, "#");
+        assert_eq!(HOST_FILE_LOCAL_PREFIX_DISABLED, "#127.0.0.1\t")
+    }
 }
