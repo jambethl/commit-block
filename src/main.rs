@@ -85,7 +85,6 @@ enum HostToggleOption {
     UNBLOCK,
 }
 
-// #[tokio::main]
 fn main() -> Result<(), Box<dyn Error>> {
     enable_raw_mode()?;
     let mut stderr = io::stderr();
