@@ -53,7 +53,10 @@ impl App {
     }
 
     pub fn save_new_host(&mut self) {
-        self.hosts.push(self.host_input.clone());
+        // This prevents a blank entry appearing if you press Enter without typing any hosts
+        if !self.host_input.is_empty() {
+            self.hosts.push(self.host_input.clone());
+        }
         self.host_input = String::new();
         self.currently_editing = None;
     }
