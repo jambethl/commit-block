@@ -393,10 +393,16 @@ fn save_config(file_path: &str, config: &Config) -> Result<(), io::Error> {
 }
 
 fn load_config(file_path: &str) -> Config {
-    let config_str = fs::read_to_string(file_path)
-        .expect("Failed to read config file.");
-    toml::from_str(&config_str)
-        .expect("Failed to parse config file.")
+    let read_result = fs::read_to_string(file_path);
+    if read_result.is_ok() {
+        toml::from_str(&read_result.unwrap())
+            .expect("Failed to parse config file.")
+    } else {
+        Config {
+            github_username: "".to_string(),
+            contribution_goal: 1
+        }
+    }
 }
 
 fn build_request_model(username: &String) -> RequestModel {
@@ -563,9 +569,11 @@ mod tests {
     use super::*;
 
     #[test]
-    #[should_panic(expected = "Failed to read config file.")]
-    fn load_config_file_not_found_panic() {
-        load_config("doesNotExist.toml");
+    fn load_config_file_not_found_return_default_config() {
+        let config = load_config("doesNotExist.toml");
+
+        assert_eq!(config.github_username, "".to_string());
+        assert_eq!(config.contribution_goal, 1);
     }
 
     #[test]
