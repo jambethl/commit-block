@@ -24,7 +24,7 @@ use crate::{
     app::{App, CurrentScreen},
     ui::ui,
 };
-use crate::app::EditingField;
+use crate::app::EditingConfigField;
 use crate::HostToggleOption::{BLOCK, UNBLOCK};
 
 mod app;
@@ -215,7 +215,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, rx: Receiver<u
                                 }
                                 KeyCode::Char(CONFIGURATION_KEY) => {
                                     app.current_screen = CurrentScreen::Configuration;
-                                    app.editing_field = Some(EditingField::ContributionGoal);
+                                    app.editing_config_field = Some(EditingConfigField::ContributionGoal);
                                 }
                                 _ => {}
                             },
@@ -280,15 +280,15 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, rx: Receiver<u
                                 }
                             }
                             CurrentScreen::Configuration => {
-                                match app.editing_field {
-                                    Some(EditingField::ContributionGoal) => {
+                                match app.editing_config_field {
+                                    Some(EditingConfigField::ContributionGoal) => {
                                         if let KeyCode::Char(c) = key.code {
                                             app.contribution_goal_input.push(c);
                                         } else if key.code == KeyCode::Backspace {
                                             app.contribution_goal_input.pop();
                                         }
                                     }
-                                    Some(EditingField::GithubUsername) => {
+                                    Some(EditingConfigField::GithubUsername) => {
                                         if let KeyCode::Char(c) = key.code {
                                             app.github_username_input.push(c);
                                         } else if key.code == KeyCode::Backspace {
@@ -305,7 +305,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, rx: Receiver<u
                                         match key.code {
                                             KeyCode::Esc => {
                                                 app.current_screen = CurrentScreen::Main;
-                                                app.editing_field = None;
+                                                app.editing_config_field = None;
                                             }
                                             KeyCode::Enter => {
                                                 if let Ok(new_goal) = app.contribution_goal_input.parse::<u32>() {
@@ -321,7 +321,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, rx: Receiver<u
                                                 }).expect("Failed to save config.");
 
                                                 // Reset the editing field
-                                                app.editing_field = None;
+                                                app.editing_config_field = None;
 
                                                 // Return to the main screen
                                                 app.current_screen = CurrentScreen::Main;

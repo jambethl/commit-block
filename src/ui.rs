@@ -8,8 +8,8 @@ use ratatui::{
 use ratatui::style::{Modifier, Stylize};
 use ratatui::style::Color::Green;
 use ratatui::widgets::Gauge;
-use crate::app::{App, CurrentScreen, EditingField};
-use crate::app::EditingField::{ContributionGoal, GithubUsername};
+use crate::app::{App, CurrentScreen, EditingConfigField};
+use crate::app::EditingConfigField::{ContributionGoal, GithubUsername};
 
 pub fn ui(frame: &mut Frame, app: &App) {
     let chunks = Layout::default()
@@ -119,12 +119,12 @@ pub fn ui(frame: &mut Frame, app: &App) {
         {
             if app.currently_editing {
                 Span::styled("Editing Host List", Style::default().fg(Color::Green))
-            } else if let Some(editing) = &app.editing_field {
+            } else if let Some(editing) = &app.editing_config_field {
                 match editing {
-                    EditingField::ContributionGoal => {
+                    EditingConfigField::ContributionGoal => {
                         Span::styled("Editing Contribution Goal", Style::default().fg(Color::Green))
                     }
-                    EditingField::GithubUsername => {
+                    EditingConfigField::GithubUsername => {
                         Span::styled("Editing Username", Style::default().fg(Color::LightGreen))
                     }
                 }
@@ -203,7 +203,7 @@ pub fn ui(frame: &mut Frame, app: &App) {
     frame.render_widget(key_notes_footer, footer_chunks[1]);
     frame.render_widget(progress_bar, footer_chunks[2]);
 
-    if let Some(_editing_config) = &app.editing_field {
+    if let Some(_editing_config) = &app.editing_config_field {
         let size = frame.area();
         let chunks = Layout::default()
             .direction(Direction::Vertical)
@@ -278,8 +278,8 @@ pub fn ui(frame: &mut Frame, app: &App) {
     }
 }
 
-fn get_input_field_style(app: &App, field: EditingField) -> Style {
-    if app.editing_field == Some(field) {
+fn get_input_field_style(app: &App, field: EditingConfigField) -> Style {
+    if app.editing_config_field == Some(field) {
         Style::default().fg(Color::Green)
     } else {
         Style::default().fg(Color::White)

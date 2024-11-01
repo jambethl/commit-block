@@ -8,7 +8,7 @@ pub enum CurrentScreen {
 }
 
 #[derive(PartialEq, Debug)]
-pub enum EditingField {
+pub enum EditingConfigField {
     ContributionGoal,
     GithubUsername,
 }
@@ -21,7 +21,7 @@ pub struct App {
     pub currently_editing: bool,
     pub contribution_goal_input: String,
     pub github_username_input: String,
-    pub editing_field: Option<EditingField>,
+    pub editing_config_field: Option<EditingConfigField>,
     pub progress: u32,
     pub contribution_goal: u32,
     pub threshold_met_date: Option<String>,
@@ -39,7 +39,7 @@ impl App {
             currently_editing: false,
             contribution_goal_input: contribution_goal.to_string(),
             github_username_input: username.clone(),
-            editing_field: None,
+            editing_config_field: None,
             progress: current_contributions,
             contribution_goal,
             threshold_met_goal,
@@ -58,13 +58,13 @@ impl App {
     }
 
     pub fn toggle_editing_config(&mut self) {
-        if let Some(edit_mode) = &self.editing_field {
+        if let Some(edit_mode) = &self.editing_config_field {
             match edit_mode {
-                EditingField::GithubUsername => self.editing_field = Some(EditingField::ContributionGoal),
-                EditingField::ContributionGoal => self.editing_field = Some(EditingField::GithubUsername),
+                EditingConfigField::GithubUsername => self.editing_config_field = Some(EditingConfigField::ContributionGoal),
+                EditingConfigField::ContributionGoal => self.editing_config_field = Some(EditingConfigField::GithubUsername),
             };
         } else {
-            self.editing_field = Some(EditingField::ContributionGoal);
+            self.editing_config_field = Some(EditingConfigField::ContributionGoal);
         }
     }
 }
@@ -73,7 +73,7 @@ impl App {
 mod tests {
     use std::str::FromStr;
     use crate::app::CurrentScreen::Main;
-    use crate::app::EditingField::{ContributionGoal, GithubUsername};
+    use crate::app::EditingConfigField::{ContributionGoal, GithubUsername};
     use super::*;
 
     #[test]
@@ -95,7 +95,7 @@ mod tests {
         assert_eq!(app.currently_editing, false);
         assert_eq!(app.contribution_goal_input, contribution_goal.to_string());
         assert_eq!(app.github_username_input, username);
-        assert_eq!(app.editing_field, None);
+        assert_eq!(app.editing_config_field, None);
         assert_eq!(app.contribution_goal, contribution_goal);
         assert_eq!(app.threshold_met_goal, threshold_met_goal);
         assert_eq!(app.threshold_met_date, threshold_met_date);
@@ -152,10 +152,10 @@ mod tests {
 
         app.toggle_editing_config();
 
-        assert_eq!(app.editing_field, Some(ContributionGoal));
+        assert_eq!(app.editing_config_field, Some(ContributionGoal));
 
         app.toggle_editing_config();
 
-        assert_eq!(app.editing_field, Some(GithubUsername));
+        assert_eq!(app.editing_config_field, Some(GithubUsername));
     }
 }
