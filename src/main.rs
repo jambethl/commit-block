@@ -21,7 +21,7 @@ use reqwest::header;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use crate::{
-    app::{App, CurrentlyEditing, CurrentScreen},
+    app::{App, CurrentScreen},
     ui::ui,
 };
 use crate::app::EditingField;
@@ -205,7 +205,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, rx: Receiver<u
                             CurrentScreen::Main => match key.code {
                                 KeyCode::Char(INSERT_KEY) => {
                                     app.current_screen = CurrentScreen::Editing;
-                                    app.currently_editing = Some(CurrentlyEditing::Key);
+                                    app.currently_editing = true;
                                 }
                                 KeyCode::Char(QUIT_KEY) => {
                                     app.current_screen = CurrentScreen::Exiting;
@@ -243,36 +243,22 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, rx: Receiver<u
                                                 }
                                             }
                                             KeyCode::Enter => {
-                                                if let Some(editing) = &app.currently_editing {
-                                                    match editing {
-                                                        CurrentlyEditing::Key => {
-                                                            app.save_new_host();
-                                                            if let Err(e) = save_to_host(app.hosts.clone()) {
-                                                                panic!("{}", e.to_string());
-                                                            }
-                                                            app.current_screen = CurrentScreen::Main;
-                                                        }
-                                                        CurrentlyEditing::Value => {
-                                                            // TODO
-                                                        }
+                                                if app.currently_editing {
+                                                    app.save_new_host();
+                                                    if let Err(e) = save_to_host(app.hosts.clone()) {
+                                                        panic!("{}", e.to_string());
                                                     }
+                                                    app.current_screen = CurrentScreen::Main;
                                                 }
                                             }
                                             KeyCode::Backspace => {
-                                                if let Some(editing) = &app.currently_editing {
-                                                    match editing {
-                                                        CurrentlyEditing::Key => {
-                                                            app.host_input.pop();
-                                                        }
-                                                        CurrentlyEditing::Value => {
-                                                            // TODO
-                                                        }
-                                                    }
+                                                if app.currently_editing {
+                                                    app.host_input.pop();
                                                 }
                                             }
                                             KeyCode::Esc => {
                                                 app.current_screen = CurrentScreen::Main;
-                                                app.currently_editing = None;
+                                                app.currently_editing = false;
                                             }
                                             KeyCode::Tab => {
                                                 if app.selected_index < app.hosts.len() {
@@ -283,15 +269,8 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, rx: Receiver<u
                                                 }
                                             }
                                             KeyCode::Char(value) => {
-                                                if let Some(editing) = &app.currently_editing {
-                                                    match editing {
-                                                        CurrentlyEditing::Key => {
-                                                            app.host_input.push(value);
-                                                        }
-                                                        CurrentlyEditing::Value => {
-                                                            // TODO
-                                                        }
-                                                    }
+                                                if app.currently_editing {
+                                                    app.host_input.push(value);
                                                 }
                                             }
                                             _ => {}

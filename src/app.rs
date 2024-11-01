@@ -8,12 +8,6 @@ pub enum CurrentScreen {
 }
 
 #[derive(PartialEq, Debug)]
-pub enum CurrentlyEditing {
-    Key,
-    Value, // TODO remove
-}
-
-#[derive(PartialEq, Debug)]
 pub enum EditingField {
     ContributionGoal,
     GithubUsername,
@@ -24,7 +18,7 @@ pub struct App {
     pub selected_index: usize,
     pub hosts: Vec<String>,
     pub current_screen: CurrentScreen,
-    pub currently_editing: Option<CurrentlyEditing>,
+    pub currently_editing: bool,
     pub contribution_goal_input: String,
     pub github_username_input: String,
     pub editing_field: Option<EditingField>,
@@ -42,7 +36,7 @@ impl App {
             selected_index: 0,
             hosts,
             current_screen: CurrentScreen::Main,
-            currently_editing: None,
+            currently_editing: false,
             contribution_goal_input: contribution_goal.to_string(),
             github_username_input: username.clone(),
             editing_field: None,
@@ -60,7 +54,7 @@ impl App {
             self.hosts.push(self.host_input.clone());
         }
         self.host_input = String::new();
-        self.currently_editing = None;
+        self.currently_editing = false;
     }
 
     pub fn toggle_editing_config(&mut self) {
@@ -98,7 +92,7 @@ mod tests {
         assert_eq!(app.progress, current_contributions);
         assert_eq!(app.selected_index, 0);
         assert_eq!(app.current_screen, Main);
-        assert_eq!(app.currently_editing, None);
+        assert_eq!(app.currently_editing, false);
         assert_eq!(app.contribution_goal_input, contribution_goal.to_string());
         assert_eq!(app.github_username_input, username);
         assert_eq!(app.editing_field, None);
@@ -122,7 +116,7 @@ mod tests {
         app.save_new_host();
 
         assert_eq!(app.host_input, String::new());
-        assert_eq!(app.currently_editing, None);
+        assert_eq!(app.currently_editing, false);
         assert_eq!(app.hosts, hosts); // No new hosts saved since host_input is empty
     }
 
@@ -141,7 +135,7 @@ mod tests {
         app.save_new_host();
 
         assert_eq!(app.host_input, String::new());
-        assert_eq!(app.currently_editing, None);
+        assert_eq!(app.currently_editing, false);
         assert_eq!(app.hosts, vec!(String::from("Commit"), String::from("Block"), String::from("New Host")));
     }
 

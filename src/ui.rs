@@ -8,7 +8,7 @@ use ratatui::{
 use ratatui::style::{Modifier, Stylize};
 use ratatui::style::Color::Green;
 use ratatui::widgets::Gauge;
-use crate::app::{App, CurrentScreen, CurrentlyEditing, EditingField};
+use crate::app::{App, CurrentScreen, EditingField};
 use crate::app::EditingField::{ContributionGoal, GithubUsername};
 
 pub fn ui(frame: &mut Frame, app: &App) {
@@ -41,7 +41,7 @@ pub fn ui(frame: &mut Frame, app: &App) {
     let mut list_items = Vec::<ListItem>::new();
 
     for (index, host) in app.hosts.iter().enumerate() {
-        let style = if app.currently_editing.is_some() && index == app.selected_index {
+        let style = if app.currently_editing && index == app.selected_index {
             Style::default().fg(Green).bg(Color::LightBlue)
         } else {
             Style::default().fg(Color::Yellow)
@@ -53,7 +53,7 @@ pub fn ui(frame: &mut Frame, app: &App) {
     }
 
     // Include the new host input line in edit mode
-    if app.currently_editing.is_some() {
+    if app.currently_editing {
         list_items.push(ListItem::new(Line::from(Span::styled(
             format!("{: <25}", app.host_input),
             Style::default().fg(Color::Cyan),
@@ -117,15 +117,8 @@ pub fn ui(frame: &mut Frame, app: &App) {
         Span::styled(" | ", Style::default().fg(Color::White)),
         // The final section of the text, with hints on what the user is editing
         {
-            if let Some(editing) = &app.currently_editing {
-                match editing {
-                    CurrentlyEditing::Key => {
-                        Span::styled("Editing Host List", Style::default().fg(Color::Green))
-                    }
-                    CurrentlyEditing::Value => {
-                        Span::styled("Editing Host Configuration", Style::default().fg(Color::LightGreen))
-                    }
-                }
+            if app.currently_editing {
+                Span::styled("Editing Host List", Style::default().fg(Color::Green))
             } else if let Some(editing) = &app.editing_field {
                 match editing {
                     EditingField::ContributionGoal => {
