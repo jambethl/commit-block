@@ -6,7 +6,6 @@ use ratatui::{
     Frame,
 };
 use ratatui::style::{Modifier, Stylize};
-use ratatui::style::Color::Green;
 use ratatui::widgets::Gauge;
 use crate::app::{App, CurrentScreen, EditingConfigField};
 use crate::app::EditingConfigField::{ContributionGoal, GithubUsername};
@@ -42,7 +41,7 @@ pub fn ui(frame: &mut Frame, app: &App) {
 
     for (index, host) in app.hosts.iter().enumerate() {
         let style = if app.currently_editing && index == app.selected_index {
-            Style::default().fg(Green).bg(Color::LightBlue)
+            Style::default().fg(Color::Green).bg(Color::LightBlue)
         } else {
             Style::default().fg(Color::Yellow)
         };
@@ -121,10 +120,10 @@ pub fn ui(frame: &mut Frame, app: &App) {
                 Span::styled("Editing Host List", Style::default().fg(Color::Green))
             } else if let Some(editing) = &app.editing_config_field {
                 match editing {
-                    EditingConfigField::ContributionGoal => {
+                    ContributionGoal => {
                         Span::styled("Editing Contribution Goal", Style::default().fg(Color::Green))
                     }
-                    EditingConfigField::GithubUsername => {
+                    GithubUsername => {
                         Span::styled("Editing Username", Style::default().fg(Color::LightGreen))
                     }
                 }
