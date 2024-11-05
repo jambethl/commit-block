@@ -469,16 +469,26 @@ fn initialise_hosts() -> Vec<String> {
 
         if inside_commit_block {
             if line.starts_with(HOST_FILE_BLOCK_PREFIX) {
-                let trimmed = line.strip_prefix(HOST_FILE_LOCAL_PREFIX_DISABLED).unwrap_or(&line).parse().unwrap();
+                let trimmed: String = get_trimmed_host_name(line, HOST_FILE_LOCAL_PREFIX_DISABLED);
                 hosts.push(trimmed);
             } else {
-                let trimmed = line.strip_prefix(HOST_FILE_LOCAL_PREFIX).unwrap_or(&line).parse().unwrap();
+                let trimmed: String = get_trimmed_host_name(line, HOST_FILE_LOCAL_PREFIX);
                 hosts.push(trimmed);
             }
         }
     }
 
+    hosts.dedup();
     hosts
+}
+
+fn get_trimmed_host_name(line: String, prefix_to_trim: &str) -> String {
+    let trimmed: String = line.strip_prefix(prefix_to_trim).unwrap_or(&line).parse().unwrap();
+    if trimmed.starts_with("::1\t\t") {
+        return trimmed.strip_prefix("::1\t\t").unwrap_or(&trimmed).parse().unwrap();
+    } else {
+        trimmed
+    }
 }
 
 /// Saves the current host configuration to the host files
@@ -504,6 +514,10 @@ fn save_to_host(hosts: Vec<String>) -> Result<(), io::Error> {
         let block_marker = "";
         new_hosts.push_str(block_marker);
         new_hosts.push_str(HOST_FILE_LOCAL_PREFIX);
+        new_hosts.push_str(&*domain);
+        new_hosts.push_str("\n");
+        new_hosts.push_str(block_marker);
+        new_hosts.push_str("::1\t\t");
         new_hosts.push_str(&*domain);
         new_hosts.push_str("\n");
     };
