@@ -614,7 +614,7 @@ mod tests {
     fn commit_block_file_content() {
         assert_eq!(HOST_FILE_COMMIT_BLOCK_BEGIN, "### CommitBlock");
         assert_eq!(HOST_FILE_COMMIT_BLOCK_END, "### End CommitBlock");
-        assert_eq!(HOST_FILE_LOCAL_PREFIX_DISABLED_IP4, "127.0.0.1\t");
+        assert_eq!(HOST_FILE_LOCAL_PREFIX_IP4, "127.0.0.1\t");
         assert_eq!(HOST_FILE_BLOCK_PREFIX, "#");
         assert_eq!(HOST_FILE_LOCAL_PREFIX_DISABLED_IP4, "#127.0.0.1\t")
     }
