@@ -31,9 +31,11 @@ mod app;
 mod ui;
 
 const CONFIG_FILE_PATH: &str = "config.toml";
-const HOST_FILE_LOCAL_PREFIX: &str = "127.0.0.1\t";
+const HOST_FILE_LOCAL_PREFIX_IP4: &str = "127.0.0.1\t";
+const HOST_FILE_LOCAL_PREFIX_IP6: &str = "::1\t\t";
 const HOST_FILE_BLOCK_PREFIX: &str = "#";
-const HOST_FILE_LOCAL_PREFIX_DISABLED: &str = "#127.0.0.1\t";
+const HOST_FILE_LOCAL_PREFIX_DISABLED_IP4: &str = "#127.0.0.1\t";
+const HOST_FILE_LOCAL_PREFIX_DISABLED_IP6: &str = "#::1\t\t";
 const HOST_FILE_COMMIT_BLOCK_BEGIN: &str = "### CommitBlock";
 const HOST_FILE_COMMIT_BLOCK_END: &str = "### End CommitBlock";
 const HOST_FILE_PATH: &str = "/etc/hosts";
@@ -469,10 +471,10 @@ fn initialise_hosts() -> Vec<String> {
 
         if inside_commit_block {
             if line.starts_with(HOST_FILE_BLOCK_PREFIX) {
-                let trimmed: String = get_trimmed_host_name(line, HOST_FILE_LOCAL_PREFIX_DISABLED);
+                let trimmed: String = get_trimmed_host_name(line, HOST_FILE_LOCAL_PREFIX_DISABLED_IP4);
                 hosts.push(trimmed);
             } else {
-                let trimmed: String = get_trimmed_host_name(line, HOST_FILE_LOCAL_PREFIX);
+                let trimmed: String = get_trimmed_host_name(line, HOST_FILE_LOCAL_PREFIX_IP4);
                 hosts.push(trimmed);
             }
         }
@@ -484,8 +486,10 @@ fn initialise_hosts() -> Vec<String> {
 
 fn get_trimmed_host_name(line: String, prefix_to_trim: &str) -> String {
     let trimmed: String = line.strip_prefix(prefix_to_trim).unwrap_or(&line).parse().unwrap();
-    if trimmed.starts_with("::1\t\t") {
-        return trimmed.strip_prefix("::1\t\t").unwrap_or(&trimmed).parse().unwrap();
+    if trimmed.starts_with(HOST_FILE_LOCAL_PREFIX_IP6) {
+        return trimmed.strip_prefix(HOST_FILE_LOCAL_PREFIX_IP6).unwrap_or(&trimmed).parse().unwrap();
+    } else if trimmed.starts_with(HOST_FILE_LOCAL_PREFIX_DISABLED_IP6) {
+        return trimmed.strip_prefix(HOST_FILE_LOCAL_PREFIX_DISABLED_IP6).unwrap_or(&trimmed).parse().unwrap();
     } else {
         trimmed
     }
@@ -513,11 +517,11 @@ fn save_to_host(hosts: Vec<String>) -> Result<(), io::Error> {
     for domain in hosts {
         let block_marker = "";
         new_hosts.push_str(block_marker);
-        new_hosts.push_str(HOST_FILE_LOCAL_PREFIX);
+        new_hosts.push_str(HOST_FILE_LOCAL_PREFIX_IP4);
         new_hosts.push_str(&*domain);
         new_hosts.push_str("\n");
         new_hosts.push_str(block_marker);
-        new_hosts.push_str("::1\t\t");
+        new_hosts.push_str(HOST_FILE_LOCAL_PREFIX_IP6);
         new_hosts.push_str(&*domain);
         new_hosts.push_str("\n");
     };
@@ -610,8 +614,8 @@ mod tests {
     fn commit_block_file_content() {
         assert_eq!(HOST_FILE_COMMIT_BLOCK_BEGIN, "### CommitBlock");
         assert_eq!(HOST_FILE_COMMIT_BLOCK_END, "### End CommitBlock");
-        assert_eq!(HOST_FILE_LOCAL_PREFIX, "127.0.0.1\t");
+        assert_eq!(HOST_FILE_LOCAL_PREFIX_DISABLED_IP4, "127.0.0.1\t");
         assert_eq!(HOST_FILE_BLOCK_PREFIX, "#");
-        assert_eq!(HOST_FILE_LOCAL_PREFIX_DISABLED, "#127.0.0.1\t")
+        assert_eq!(HOST_FILE_LOCAL_PREFIX_DISABLED_IP4, "#127.0.0.1\t")
     }
 }
