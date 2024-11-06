@@ -304,3 +304,41 @@ fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
         ])
         .split(popup_layout[1])[1]
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn can_get_input_field_style() {
+        let hosts: Vec<String> = vec!(String::from("Commit"), String::from("Block"));
+        let current_contributions = 4;
+        let contribution_goal = 5;
+        let username = String::from("BingBong");
+        let threshold_met_date = Some(String::from("01/11/2024"));
+        let threshold_met_goal = Some(4);
+
+        let mut app = App::new(hosts.clone(), current_contributions, contribution_goal, username.clone(), threshold_met_date.clone(), threshold_met_goal.clone());
+        app.editing_config_field = Option::from(ContributionGoal);
+
+        let actual_style = get_input_field_style(&app, ContributionGoal);
+
+        assert_eq!(actual_style, Style::default().fg(Color::Green));
+    }
+
+    #[test]
+    fn can_get_input_field_style_not_editing() {
+        let hosts: Vec<String> = vec!(String::from("Commit"), String::from("Block"));
+        let current_contributions = 4;
+        let contribution_goal = 5;
+        let username = String::from("BingBong");
+        let threshold_met_date = Some(String::from("01/11/2024"));
+        let threshold_met_goal = Some(4);
+
+        let app = App::new(hosts.clone(), current_contributions, contribution_goal, username.clone(), threshold_met_date.clone(), threshold_met_goal.clone());
+
+        let actual_style = get_input_field_style(&app, ContributionGoal);
+
+        assert_eq!(actual_style, Style::default().fg(Color::White));
+    }
+}
