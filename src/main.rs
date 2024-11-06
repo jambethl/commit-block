@@ -515,12 +515,9 @@ fn save_to_host(hosts: Vec<String>) -> Result<(), io::Error> {
 
     new_hosts.push_str("### CommitBlock\n");
     for domain in hosts {
-        let block_marker = "";
-        new_hosts.push_str(block_marker);
         new_hosts.push_str(HOST_FILE_LOCAL_PREFIX_IP4);
         new_hosts.push_str(&*domain);
         new_hosts.push_str("\n");
-        new_hosts.push_str(block_marker);
         new_hosts.push_str(HOST_FILE_LOCAL_PREFIX_IP6);
         new_hosts.push_str(&*domain);
         new_hosts.push_str("\n");
