@@ -45,6 +45,7 @@ const INSERT_KEY: char = 'i';
 const HELP_KEY: char = 'h';
 const CONFIGURATION_KEY: char = 'c';
 const DATE_FORMATTER: &str = "%Y-%m-%d";
+const GH_API_PATH: &str = "https://api.github.com/graphql";
 const GRAPHQL_QUERY: &str = r#"
         query($userName:String!) {
           user(login: $userName){
@@ -64,7 +65,6 @@ const GRAPHQL_QUERY: &str = r#"
        "#;
 
 struct RequestModel {
-    path: String,
     token: String,
     body: Value,
 }
@@ -356,7 +356,7 @@ fn check_contribution_progress(configuration: &Config) -> u32 {
     let request_info = build_request_model(&configuration.github_username);
 
     let response = client
-        .post(&request_info.path)
+        .post(GH_API_PATH)
         .header(header::USER_AGENT, "AppName/0.1")
         .bearer_auth(&request_info.token)
         .json(&request_info.body)
@@ -417,10 +417,8 @@ fn build_request_model(username: &String) -> RequestModel {
             "userName": username
         }
     });
-    let path = String::from("https://api.github.com/graphql");
 
     RequestModel {
-        path,
         token,
         body,
     }
@@ -605,6 +603,11 @@ mod tests {
     #[test]
     fn config_file_name() {
         assert_eq!(CONFIG_FILE_PATH, "config.toml")
+    }
+
+    #[test]
+    fn gh_api_path() {
+        assert_eq!(GH_API_PATH, "https://api.github.com/graphql")
     }
 
     #[test]
