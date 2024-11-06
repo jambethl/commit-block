@@ -10,6 +10,23 @@ use ratatui::widgets::Gauge;
 use crate::app::{App, CurrentScreen, EditingConfigField};
 use crate::app::EditingConfigField::{ContributionGoal, GithubUsername};
 
+const HELP_SECTION_TEXT: &str = r#"
+            Commit Blocker allows you to block a configured list of hosts until a given GitHub contribution goal has been met for the day.
+
+            `Blocked Hosts`
+            The `Blocked Hosts` panel shows the currently configured list of hosts which will be blocked until today's contribution goal is met.
+            Pressing (i) will enter Insert mode, where you can add new entries to the list. Pressing (tab) will delete the currently highlighted
+            host. Press (esc) to quit Insert mode without saving changes, and (enter) to save and exit.
+
+            `Configuration`
+            This panel displays the current configuration, including the current contribution target and today's current contribution count.
+            Press (c) to enter edit mode, where you can adjust the configuration to alter the contribution goal and update the GitHub username.
+            Pressing (tab) will toggle between the two configuration panels. Press (esc) to exit without saving, or press (enter) to save your changes.
+
+            When the contribution goal has been met, the `/etc/hosts` file will be updated to comment-out the list of hosts. This will reset the following day,
+            and the contribution goal will need to be met again in order to unblock the hosts.
+            "#;
+
 pub fn ui(frame: &mut Frame, app: &App) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
@@ -231,25 +248,7 @@ pub fn ui(frame: &mut Frame, app: &App) {
             .borders(Borders::ALL)
             .style(Style::default().bg(Color::Black));
 
-        let help_text = Text::styled(
-            r#"
-            Commit Blocker allows you to block a configured list of hosts until a given GitHub contribution goal has been met for the day.
-
-            `Blocked Hosts`
-            The `Blocked Hosts` panel shows the currently configured list of hosts which will be blocked until today's contribution goal is met.
-            Pressing (i) will enter Insert mode, where you can add new entries to the list. Pressing (tab) will delete the currently highlighted
-            host. Press (esc) to quit Insert mode without saving changes, and (enter) to save and exit.
-
-            `Configuration`
-            This panel displays the current configuration, including the current contribution target and today's current contribution count.
-            Press (c) to enter edit mode, where you can adjust the configuration to alter the contribution goal and update the GitHub username.
-            Pressing (tab) will toggle between the two configuration panels. Press (esc) to exit without saving, or press (enter) to save your changes.
-
-            When the contribution goal has been met, the `/etc/hosts` file will be updated to comment-out the list of hosts. This will reset the following day,
-            and the contribution goal will need to be met again in order to unblock the hosts.
-            "#,
-            Style::default().fg(Color::White),
-        );
+        let help_text = Text::styled(HELP_SECTION_TEXT, Style::default().fg(Color::White));
         let help_paragraph = Paragraph::new(help_text)
             .block(popup_block);
         let area = centered_rect(100, 100, frame.area());
