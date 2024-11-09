@@ -13,3 +13,4 @@ sudo cargo run
 ```
 3. Press `c` to open the configuration panel. You can supply your contribution goal and GitHub username there. Press `tab` to toggle between fields
 4. To add a new host to your blocked list, press `i` to enter edit mode. Pressing `enter` will save your changes. You can delete an existing entry by pressing `tab`. Press `esc` to exit edit mode
+
