@@ -215,10 +215,6 @@ pub fn ui(frame: &mut Frame, app: &App) {
         .label(progress_label)
         .ratio(contribution_ratio);
 
-    frame.render_widget(mode_footer, footer_chunks[0]);
-    frame.render_widget(key_notes_footer, footer_chunks[1]);
-    frame.render_widget(progress_bar, footer_chunks[2]);
-
     if let Some(_editing_config) = &app.editing_config_field {
         let size = frame.area();
         let chunks = Layout::default()
@@ -274,6 +270,10 @@ pub fn ui(frame: &mut Frame, app: &App) {
         let area = centered_rect(60, 25, frame.area());
         frame.render_widget(exit_paragraph, area);
     }
+
+    frame.render_widget(mode_footer, footer_chunks[0]);
+    frame.render_widget(key_notes_footer, footer_chunks[1]);
+    frame.render_widget(progress_bar, footer_chunks[2]);
 }
 
 fn get_input_field_style(app: &App, field: EditingConfigField) -> Style {
