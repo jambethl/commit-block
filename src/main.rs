@@ -152,8 +152,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         DisableMouseCapture
     )?;
 
-    terminal.show_cursor()?;
-
     Ok(())
 }
 
