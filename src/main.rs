@@ -310,6 +310,8 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, rx: Receiver<u
                                             KeyCode::Enter => {
                                                 if let Ok(new_goal) = app.contribution_goal_input.parse::<u32>() {
                                                     app.contribution_goal = new_goal;
+                                                } else {
+                                                    app.contribution_goal_input = app.contribution_goal.to_string();
                                                 }
 
                                                 app.username = app.github_username_input.clone();
