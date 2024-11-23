@@ -310,23 +310,22 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, rx: Receiver<u
                                             KeyCode::Enter => {
                                                 if let Ok(new_goal) = app.contribution_goal_input.parse::<u32>() {
                                                     app.contribution_goal = new_goal;
+                                                    app.username = app.github_username_input.clone();
+
+                                                    // Save the configuration back to the file
+                                                    save_config(CONFIG_FILE_PATH, &Config {
+                                                        github_username: app.username.clone(),
+                                                        contribution_goal: app.contribution_goal,
+                                                    }).expect("Failed to save config.");
+
+                                                    // Reset the editing field
+                                                    app.editing_config_field = None;
+
+                                                    // Return to the main screen
+                                                    app.current_screen = CurrentScreen::Main;
                                                 } else {
                                                     app.contribution_goal_input = app.contribution_goal.to_string();
                                                 }
-
-                                                app.username = app.github_username_input.clone();
-
-                                                // Save the configuration back to the file
-                                                save_config(CONFIG_FILE_PATH, &Config {
-                                                    github_username: app.username.clone(),
-                                                    contribution_goal: app.contribution_goal,
-                                                }).expect("Failed to save config.");
-
-                                                // Reset the editing field
-                                                app.editing_config_field = None;
-
-                                                // Return to the main screen
-                                                app.current_screen = CurrentScreen::Main;
                                             }
                                             _ => {}
                                         }
