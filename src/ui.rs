@@ -199,7 +199,7 @@ pub fn ui(frame: &mut Frame, app: &App) {
         Style::new().italic().bold().fg(progress_bar_fg_color),
     );
 
-    let contribution_ratio = if app.progress > app.contribution_goal {
+    let contribution_ratio = if app.progress >= app.contribution_goal {
         1.0
     } else {
         app.progress as f64 / app.contribution_goal as f64
