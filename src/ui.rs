@@ -156,19 +156,19 @@ pub fn ui(frame: &mut Frame, app: &App) {
     let current_keys_hint = {
         match app.current_screen {
             CurrentScreen::Main => Span::styled(
-                "(i) modify hosts / (c) edit configuration / (q) quit / (h) help",
+                "(i) modify hosts (c) edit configuration (q) quit (h) help",
                 Style::default().fg(Color::Red),
             ),
             CurrentScreen::Editing => Span::styled(
-                "(ESC) to cancel / (Tab) to delete entry / (Enter) to complete",
+                "(ESC) cancel (Tab) delete entry (Enter) save",
                 Style::default().fg(Color::Red),
             ),
             CurrentScreen::Exiting => Span::styled(
-                "(q) to quit / (i) to insert new host / (h) for help",
+                "(q) quit (i) insert new host (h) for help",
                 Style::default().fg(Color::Red),
             ),
             CurrentScreen::Configuration => Span::styled(
-                "(ESC) to cancel / (Tab) to switch boxes / enter to complete",
+                "(ESC) cancel (Tab) switch panel (Enter) save",
                 Style::default().fg(Color::Red),
             ),
             CurrentScreen::Help => Span::styled(
