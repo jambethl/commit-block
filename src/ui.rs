@@ -164,7 +164,7 @@ pub fn ui(frame: &mut Frame, app: &App) {
                 Style::default().fg(Color::Red),
             ),
             CurrentScreen::Exiting => Span::styled(
-                "(q) quit (i) insert new host (h) for help",
+                "(y/q) quit (n) resume",
                 Style::default().fg(Color::Red),
             ),
             CurrentScreen::Configuration => Span::styled(
