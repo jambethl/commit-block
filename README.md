@@ -29,6 +29,12 @@ The `main.rs` file is responsible for the business logic of the application.
 ### ui.rs
 `ui.rs` is responsible for defining the layout of the interface and rendering the widgets.
 
+## FAQ
+
+**Q. I've configured a host, but I can still access the website**
+
+A. Ensure that the configured host has its top-level domain configured, i.e, `.com`, `.org`, etc. Check that the top-level domain of the site you're accessing matches the top-level domain configured in the application. Also make sure that the contribution goal has not been met yet, as that will unblock all configured hosts
+
 ## Contributing
 There are many ways to contribute to this repository, including opening issues, raising PRs, and suggesting features.
 
