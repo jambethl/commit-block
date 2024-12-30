@@ -35,6 +35,10 @@ The `main.rs` file is responsible for the business logic of the application.
 
 A. Ensure that the configured host has its top-level domain configured, i.e, `.com`, `.org`, etc. Check that the top-level domain of the site you're accessing matches the top-level domain configured in the application. Also make sure that the contribution goal has not been met yet, as that will unblock all configured hosts
 
+**Q. My contribution goal isn't accurate**
+
+A. Make sure to configure the GitHub username. Do this by pressing `c` and entering the username. If the name has been configured correctly, but the goal is showing `0/n`, verify whether the GitHub token you have configured in the `.env` file is still valid. An expired token will not return correct results.
+
 ## Contributing
 There are many ways to contribute to this repository, including opening issues, raising PRs, and suggesting features.
 
